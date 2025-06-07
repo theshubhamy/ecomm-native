@@ -41,7 +41,7 @@ export default function TabLayout() {
         options={{
           title: 'Catalog',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="search.fill" color={color} />
+            <IconSymbol size={28} name="managesearch.fill" color={color} />
           ),
         }}
       />

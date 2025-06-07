@@ -17,11 +17,15 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'cart.fill': 'shopping-cart',
-  'search.fill': 'manage-search',
+  'managesearch.fill': 'manage-search',
   'favorite.fill': 'favorite',
   'person.fill': 'person',
   'ellipsis.fill': 'more-vert',
   'ellipsis.circle.fill': 'more-horiz',
+  'notification.fill': 'notifications',
+  'location.fill': 'location-on',
+  'search.fill': 'search',
+  'microphone.fill': 'mic',
 } as const;
 
 export function IconSymbol({
