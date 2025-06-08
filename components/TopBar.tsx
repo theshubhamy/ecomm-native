@@ -19,11 +19,7 @@ const TopBar = () => {
         paddingTop: insets.top,
       }}
     >
-      <ThemedView
-        style={{
-          ...styles.header,
-        }}
-      >
+      <ThemedView style={styles.header}>
         <Image
           source={require('../assets/images/icon.png')}
           style={{
@@ -51,7 +47,6 @@ const TopBar = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 16,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,

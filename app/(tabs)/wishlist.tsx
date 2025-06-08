@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native';
 
 export default function TabTwoScreen() {
   return (
-    <ScrollView backgroundColor={{ light: '#D0D0D0', dark: '#353636' }}>
+    <ScrollView>
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Explore</ThemedText>
       </ThemedView>

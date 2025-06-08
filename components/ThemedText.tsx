@@ -48,7 +48,7 @@ export function ThemedText({
 
 const styles = StyleSheet.create({
   xsmall: {
-    fontSize: 10,
+    fontSize: 12,
     lineHeight: 14,
   },
   small: {

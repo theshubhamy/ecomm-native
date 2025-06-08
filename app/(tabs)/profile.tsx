@@ -1,27 +1,27 @@
 import ScrollView from '@/components/ScrollView';
+import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useSession } from '@/context';
 import { StyleSheet } from 'react-native';
-
-export default function TabTwoScreen() {
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+export default function Profile() {
+  const insets = useSafeAreaInsets();
+  const { signOut } = useSession();
   return (
-    <ScrollView backgroundColor={{ light: '#D0D0D0', dark: '#353636' }}>
+    <ScrollView style={{ paddingTop: insets.top }}>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
+        <ThemedText type="title">Profile</ThemedText>
+        <ThemedButton onPress={() => signOut()}>
+          <ThemedText type="title">Sign Out</ThemedText>
+        </ThemedButton>
       </ThemedView>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
   titleContainer: {
-    flexDirection: 'row',
     gap: 8,
   },
 });
