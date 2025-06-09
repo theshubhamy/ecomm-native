@@ -1,4 +1,4 @@
-import { useStorageState } from '@/src/hooks/useStorageState';
+import { useStorageState } from '@/hooks/useStorageState';
 import { createContext, useContext, type PropsWithChildren } from 'react';
 
 // Define the shape of the auth context

@@ -1,5 +1,5 @@
-import { Colors } from '@/src/constants/Colors';
-import { useColorScheme } from '@/src/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet } from 'react-native';

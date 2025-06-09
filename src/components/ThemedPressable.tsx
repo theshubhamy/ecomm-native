@@ -1,4 +1,4 @@
-import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useThemeColor } from '@/hooks/useThemeColor';
 import React, { forwardRef } from 'react';
 import { GestureResponderEvent, Pressable, ViewProps } from 'react-native';
 

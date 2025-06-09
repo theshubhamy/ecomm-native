@@ -1,5 +1,5 @@
-import { Colors } from '@/src/constants/Colors';
-import { useColorScheme } from '@/src/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import React from 'react';
 import { ThemedPressable } from './ThemedPressable';
 import { ThemedText } from './ThemedText';
