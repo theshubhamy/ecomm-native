@@ -1,6 +1,10 @@
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useThemeColor } from '@/src/hooks/useThemeColor';
 import React, { forwardRef } from 'react';
-import { GestureResponderEvent, Pressable, ViewProps } from 'react-native';
+import {
+  GestureResponderEvent,
+  TouchableOpacity,
+  ViewProps,
+} from 'react-native';
 
 type ThemeColorName =
   | 'background'
@@ -20,7 +24,7 @@ export type ThemedViewProps = ViewProps & {
   style?: ViewProps['style'];
 };
 
-export const ThemedPressable = forwardRef<any, ThemedViewProps>(
+export const ThemedButton = forwardRef<any, ThemedViewProps>(
   (
     {
       style,
@@ -37,7 +41,7 @@ export const ThemedPressable = forwardRef<any, ThemedViewProps>(
     );
 
     return (
-      <Pressable
+      <TouchableOpacity
         ref={ref}
         style={[{ backgroundColor }, style]}
         {...otherProps}
@@ -46,4 +50,4 @@ export const ThemedPressable = forwardRef<any, ThemedViewProps>(
   },
 );
 
-ThemedPressable.displayName = 'ThemedPressable';
+ThemedButton.displayName = 'ThemedButton';

@@ -2,7 +2,7 @@ import type { PropsWithChildren } from 'react';
 import type { ScrollViewProps } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
-import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
+import { useBottomTabOverflow } from '@/src/components/ui/TabBarBackground';
 
 type Props = PropsWithChildren<ScrollViewProps>;
 
