@@ -1,3 +1,4 @@
+import ProductCard from '@/components/cards/Product';
 import Categories from '@/components/Categories';
 import ScrollView from '@/components/ScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -6,6 +7,7 @@ import TopBar from '@/components/TopBar';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { FlashList } from '@shopify/flash-list';
 import { StyleSheet } from 'react-native';
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -69,20 +71,23 @@ export default function HomeScreen() {
               />
             </ThemedView>
           </ThemedView>
-          {/* Products */}
-          <ThemedView style={styles.stepContainer}>
-            <ThemedView
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <ThemedText type="subtitle" style={{ marginTop: 8 }}>
-                Coming Soon!
-              </ThemedText>
-            </ThemedView>
-          </ThemedView>
+          <FlashList
+            data={Array.from({ length: 20 }, (_, i) => ({
+              id: i,
+              name: `Item ${i + 1}`,
+            }))}
+            renderItem={({ item }: any) => (
+              <ProductCard item={item} key={item.id} />
+            )}
+            overrideItemLayout={(layout, item) => {
+              layout.span = item.span; // Set span
+            }}
+            numColumns={2}
+            estimatedItemSize={200}
+            keyExtractor={(item: any) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            ListFooterComponent={<ThemedView style={{ height: 100 }} />}
+          />
         </ThemedView>
       </ScrollView>
     </ThemedView>
