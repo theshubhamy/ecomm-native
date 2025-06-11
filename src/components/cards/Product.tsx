@@ -13,7 +13,7 @@ const Product = ({ item }: any) => {
     <ThemedView
       style={{
         ...styles.cardContainer,
-        backgroundColor: Colors[colorScheme ?? 'light'].backgroundPaper,
+        backgroundColor: Colors[colorScheme].backgroundPaper,
       }}
     >
       <Image source={{ uri: item.imageUrl }} style={styles.productImage} />

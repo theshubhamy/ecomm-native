@@ -25,7 +25,7 @@ const TopBar = () => {
           style={{
             width: 40,
             height: 40,
-            backgroundColor: Colors[colorScheme ?? 'light'].backgroundPaper,
+            backgroundColor: Colors[colorScheme].backgroundPaper,
           }}
           contentFit="cover"
           transition={1000}
@@ -36,7 +36,7 @@ const TopBar = () => {
           <IconSymbol
             name="notification.fill"
             size={28}
-            color={Colors[colorScheme ?? 'light'].icon}
+            color={Colors[colorScheme].icon}
           />
         </ThemedPressable>
       </ThemedView>

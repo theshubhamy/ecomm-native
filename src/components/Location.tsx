@@ -17,7 +17,7 @@ const Location = () => {
     >
       <ThemedText
         type="xsmall"
-        style={{ color: Colors[colorScheme ?? 'light'].textSecondary }}
+        style={{ color: Colors[colorScheme].textSecondary }}
       >
         Delivery address
       </ThemedText>

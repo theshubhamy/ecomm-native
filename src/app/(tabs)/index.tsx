@@ -16,7 +16,7 @@ export default function HomeScreen() {
     <ThemedView
       style={{
         ...styles.container,
-        backgroundColor: Colors[colorScheme ?? 'light'].background,
+        backgroundColor: Colors[colorScheme].background,
       }}
     >
       <TopBar />
@@ -34,14 +34,14 @@ export default function HomeScreen() {
             >
               <ThemedText
                 type="xsmall"
-                style={{ color: Colors[colorScheme ?? 'light'].textSecondary }}
+                style={{ color: Colors[colorScheme].textSecondary }}
               >
                 See All
               </ThemedText>
               <IconSymbol
                 name="chevron.right"
                 size={20}
-                color={Colors[colorScheme ?? 'light'].icon}
+                color={Colors[colorScheme].icon}
               />
             </ThemedView>
           </ThemedView>
@@ -60,14 +60,14 @@ export default function HomeScreen() {
             >
               <ThemedText
                 type="xsmall"
-                style={{ color: Colors[colorScheme ?? 'light'].textSecondary }}
+                style={{ color: Colors[colorScheme].textSecondary }}
               >
                 See All
               </ThemedText>
               <IconSymbol
                 name="chevron.right"
                 size={20}
-                color={Colors[colorScheme ?? 'light'].icon}
+                color={Colors[colorScheme].icon}
               />
             </ThemedView>
           </ThemedView>

@@ -18,26 +18,26 @@ const Search = () => {
         borderWidth: 1,
         borderRadius: 10,
         paddingHorizontal: 10,
-        borderColor: Colors[colorScheme ?? 'light'].background,
-        backgroundColor: Colors[colorScheme ?? 'light'].background,
+        borderColor: Colors[colorScheme].background,
+        backgroundColor: Colors[colorScheme].background,
       }}
     >
       <IconSymbol
         name="search.fill"
         size={20}
-        color={Colors[colorScheme ?? 'light'].textPrimary}
+        color={Colors[colorScheme].textPrimary}
       />
       <TextInput
         style={{
           flex: 1,
-          color: Colors[colorScheme ?? 'light'].textPrimary,
+          color: Colors[colorScheme].textPrimary,
           fontSize: 16,
           lineHeight: 24,
         }}
         cursorColor={Colors.secondary}
         selectionColor={Colors.secondary}
         placeholder="Search for products or categories ..."
-        placeholderTextColor={Colors[colorScheme ?? 'light'].textSecondary}
+        placeholderTextColor={Colors[colorScheme].textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
@@ -58,7 +58,7 @@ const Search = () => {
           console.log('Voice input activated');
         }}
         style={{
-          backgroundColor: Colors[colorScheme ?? 'light'].background,
+          backgroundColor: Colors[colorScheme].background,
         }}
       >
         <IconSymbol name="microphone.fill" size={24} color={Colors.primary} />
