@@ -1,24 +1,18 @@
+import { ThemedPressable } from '@/components/ThemedPressable';
+import { ThemedView } from '@/components/ThemedView';
+import HeaderView from '@/components/ui/HeaderView';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Location from './Location';
 import Search from './Search';
-import { ThemedPressable } from './ThemedPressable';
-import { ThemedView } from './ThemedView';
-import { IconSymbol } from './ui/IconSymbol';
 const TopBar = () => {
   const colorScheme = useColorScheme();
-  const insets = useSafeAreaInsets();
   return (
-    <ThemedView
-      style={{
-        ...styles.container,
-        paddingTop: insets.top,
-      }}
-    >
+    <HeaderView>
       <ThemedView style={styles.header}>
         <Image
           source={require('../assets/images/icon.png')}
@@ -41,7 +35,7 @@ const TopBar = () => {
         </ThemedPressable>
       </ThemedView>
       <Search />
-    </ThemedView>
+    </HeaderView>
   );
 };
 
