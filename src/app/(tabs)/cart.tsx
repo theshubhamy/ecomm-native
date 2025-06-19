@@ -9,7 +9,7 @@ import { useColorScheme } from '@/hooks/useColorScheme.web';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 export default function Cart() {
-  const [cartItem, _setCartItem] = useState<[] | null>(null);
+  const [cartItem, setCartItem] = useState<[] | null>(null);
   const colorScheme = useColorScheme();
   return (
     <ThemedView
