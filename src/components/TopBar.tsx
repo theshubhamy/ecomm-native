@@ -56,7 +56,6 @@ const styles = StyleSheet.create({
   notification: {
     padding: 8,
     borderRadius: 9999,
-    shadowColor: Colors.light.tint,
   },
   content: {
     flex: 1,

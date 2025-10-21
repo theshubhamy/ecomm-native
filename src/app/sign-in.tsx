@@ -1,20 +1,23 @@
 import { router } from 'expo-router';
-import { Text, View } from 'react-native';
 
 import { useSession } from '@/context';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 
 export default function SignIn() {
   const { signIn } = useSession();
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text
+    <ThemedView
+      style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+    >
+      <ThemedText
         onPress={() => {
           signIn();
           router.replace('/');
         }}
       >
         Sign In
-      </Text>
-    </View>
+      </ThemedText>
+    </ThemedView>
   );
 }
