@@ -47,6 +47,72 @@ const Product = ({ item }: ProductProps) => {
     Alert.alert('Success', 'Product added to cart!');
   };
 
+  // Render stars based on rating with partial fill support
+  const renderStars = () => {
+    if (!item.rating) {
+      return (
+        <ThemedText
+          type="xsmall"
+          style={{ color: Colors[colorScheme].textSecondary }}
+        >
+          No rating
+        </ThemedText>
+      );
+    }
+
+    const rating = item.rating;
+    const maxStars = 5;
+    const fullStars = Math.floor(rating); // Integer part (full stars)
+    const decimalPart = rating - fullStars; // Decimal part (0.0 to 0.9)
+    const hasPartialStar = decimalPart > 0 && fullStars < maxStars;
+    const emptyStars = maxStars - fullStars - (hasPartialStar ? 1 : 0);
+
+    return (
+      <ThemedView style={styles.starsContainer}>
+        {/* Full filled stars */}
+        {Array.from({ length: fullStars }).map((_, index) => (
+          <IconSymbol
+            key={`filled-${index}`}
+            name="star.fill"
+            size={12}
+            color={Colors.warning}
+          />
+        ))}
+
+        {/* Partial star */}
+        {hasPartialStar && (
+          <ThemedView style={styles.partialStarContainer}>
+            {/* Empty star as background */}
+            <IconSymbol
+              name="star"
+              size={12}
+              color={Colors[colorScheme].textSecondary}
+            />
+            {/* Filled star clipped to percentage */}
+            <ThemedView
+              style={[
+                styles.partialStarFill,
+                { width: `${decimalPart * 100}%` },
+              ]}
+            >
+              <IconSymbol name="star.fill" size={12} color={Colors.warning} />
+            </ThemedView>
+          </ThemedView>
+        )}
+
+        {/* Empty stars */}
+        {Array.from({ length: emptyStars }).map((_, index) => (
+          <IconSymbol
+            key={`empty-${index}`}
+            name="star"
+            size={12}
+            color={Colors[colorScheme].textSecondary}
+          />
+        ))}
+      </ThemedView>
+    );
+  };
+
   return (
     <TouchableOpacity
       onPress={handleProductPress}
@@ -83,16 +149,41 @@ const Product = ({ item }: ProductProps) => {
         <ThemedText
           type="small"
           numberOfLines={2}
-          style={{ fontSize: 16, fontWeight: 'bold' }}
           accessible={true}
           accessibilityRole="text"
         >
           {item.name}
         </ThemedText>
+        {/* review */}
+        <ThemedView style={styles.reviewContainer}>
+          {renderStars()}
+          {item.rating && (
+            <ThemedText
+              type="xsmall"
+              style={{
+                color: Colors[colorScheme].textPrimary,
+                marginLeft: 4,
+              }}
+            >
+              {item.rating.toFixed(1)}
+            </ThemedText>
+          )}
+          {item.reviewCount !== undefined && item.reviewCount > 0 && (
+            <ThemedText
+              type="xsmall"
+              style={{
+                color: Colors[colorScheme].textSecondary,
+                marginLeft: 4,
+              }}
+            >
+              ({item.reviewCount})
+            </ThemedText>
+          )}
+        </ThemedView>
         <ThemedView style={styles.flexDirectionRow}>
           <ThemedView style={{ flex: 1 }}>
             <ThemedText
-              style={styles.productPrice}
+              type="default"
               accessible={true}
               accessibilityRole="text"
               accessibilityLabel={`Price: ${
@@ -126,7 +217,7 @@ const Product = ({ item }: ProductProps) => {
             accessibilityRole="button"
             accessibilityHint="Double tap to add this product to your cart"
           >
-            <IconSymbol name="cart.fill" size={20} color={Colors.secondary} />
+            <ThemedText type="xsmall">Add</ThemedText>
           </ThemedButton>
         </ThemedView>
       </ThemedView>
@@ -139,10 +230,10 @@ export default Product;
 const styles = StyleSheet.create({
   cardContainer: {
     flex: 1,
-    margin: 10,
+    margin: 5,
     padding: 2,
     borderRadius: 10,
-    gap: 10,
+    gap: 5,
   },
 
   flexDirectionRow: {
@@ -153,18 +244,41 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 160,
+    height: 120,
     borderRadius: 10,
     backgroundColor: Colors.light.background,
   },
 
-  productPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   productAddToCartButton: {
-    padding: 5,
-    borderRadius: 5,
+    paddingHorizontal: 20,
+    paddingVertical: 5,
+    borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderWidth: 0.5,
+    borderColor: Colors.primary,
+  },
+  reviewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  partialStarContainer: {
+    position: 'relative',
+    width: 12,
+    height: 12,
+  },
+  partialStarFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    overflow: 'hidden',
+    height: 12,
   },
 });

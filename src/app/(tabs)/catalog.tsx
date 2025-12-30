@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
+import { useLocalSearchParams } from 'expo-router';
 
 import ScrollView from '@/components/ScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -24,6 +25,7 @@ import { Category } from '@/types';
 export default function Catalog() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
+  const params = useLocalSearchParams<{ category?: string }>();
   const {
     items: products,
     isLoading,
@@ -32,7 +34,9 @@ export default function Catalog() {
   const { items: categories, isLoading: categoriesLoading } = useAppSelector(
     state => state.categories,
   );
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    params.category || null,
+  );
 
   useEffect(() => {
     // Fetch categories on mount
@@ -40,6 +44,13 @@ export default function Catalog() {
       dispatch(fetchCategories());
     }
   }, [dispatch, categories.length, categoriesLoading]);
+
+  // Handle category from URL params
+  useEffect(() => {
+    if (params.category && params.category !== selectedCategory) {
+      setSelectedCategory(params.category);
+    }
+  }, [params.category, selectedCategory]);
 
   useEffect(() => {
     if (selectedCategory) {

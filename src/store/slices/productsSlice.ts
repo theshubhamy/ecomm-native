@@ -53,6 +53,7 @@ export const fetchProducts = createAsyncThunk(
                 categoryId: item.category_id || item.categoryId,
                 inStock: item.in_stock ?? item.inStock ?? true,
                 rating: item.rating,
+                reviewCount: item.review_count || item.reviewCount,
               }));
               await cacheProducts(products);
               await setLastSyncTime();
@@ -88,6 +89,7 @@ export const fetchProducts = createAsyncThunk(
         categoryId: item.category_id || item.categoryId,
         inStock: item.in_stock ?? item.inStock ?? true,
         rating: item.rating,
+        reviewCount: item.review_count || item.reviewCount,
       }));
 
       // Cache the fetched data
@@ -134,6 +136,7 @@ export const fetchProductsByCategory = createAsyncThunk(
         categoryId: item.category_id || item.categoryId,
         inStock: item.in_stock ?? item.inStock ?? true,
         rating: item.rating,
+        reviewCount: item.review_count || item.reviewCount,
       }));
 
       return products;
@@ -169,6 +172,7 @@ export const searchProducts = createAsyncThunk(
         categoryId: item.category_id || item.categoryId,
         inStock: item.in_stock ?? item.inStock ?? true,
         rating: item.rating,
+        reviewCount: item.review_count || item.reviewCount,
       }));
 
       return products;

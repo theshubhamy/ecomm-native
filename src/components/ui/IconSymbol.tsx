@@ -12,6 +12,7 @@ export type IconSymbolName = keyof typeof MAPPING;
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
 const MAPPING = {
+  'share.fill': 'share',
   'house.fill': 'home',
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
@@ -32,19 +33,23 @@ const MAPPING = {
   'lock.fill': 'lock',
   'eye.fill': 'visibility',
   'eye.slash.fill': 'visibility-off',
-  'plus': 'add',
-  'minus': 'remove',
-  'pencil': 'edit',
+  plus: 'add',
+  minus: 'remove',
+  pencil: 'edit',
   'trash.fill': 'delete',
   'checkmark.square.fill': 'check-box',
-  'square': 'check-box-outline-blank',
+  square: 'check-box-outline-blank',
   'creditcard.fill': 'credit-card',
-  'xmark': 'close',
+  xmark: 'close',
   'xmark.circle.fill': 'cancel',
   'square.grid.2x2': 'apps',
   'square.grid.2x2.fill': 'apps',
-  'tag': 'local-offer',
+  tag: 'local-offer',
   'tag.fill': 'local-offer',
+  'star.fill': 'star',
+  star: 'star-border',
+  'cash.fill': 'attach-money',
+  cash: 'attach-money',
 } as const;
 
 export function IconSymbol({

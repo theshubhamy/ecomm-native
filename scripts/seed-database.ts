@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://ytrpzvtwitxtnfpkuntn.supabase.co';
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 
-const supabaseKey = 'sb_publishable_tNuXTaD1vSUSXSPd8bASsg_QbaPgsim';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Missing Supabase credentials!');

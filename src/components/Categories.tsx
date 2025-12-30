@@ -5,10 +5,12 @@ import { StyleSheet, ActivityIndicator } from 'react-native';
 import ScrollView from './ScrollView';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
+import { ThemedPressable } from './ThemedPressable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchCategories } from '@/store/slices/categoriesSlice';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { router } from 'expo-router';
 
 const Categories = () => {
   const colorScheme = useColorScheme();
@@ -59,15 +61,20 @@ const Categories = () => {
     return null;
   }
 
+  const handleCategoryPress = (categoryId: string) => {
+    router.push(`/catalog?category=${categoryId}`);
+  };
+
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       {categories.map((category: Category) => (
-        <ThemedView
+        <ThemedPressable
+          key={category.id}
+          onPress={() => handleCategoryPress(category.id)}
           style={[
             styles.categoryCard,
             { backgroundColor: Colors[colorScheme].backgroundPaper },
           ]}
-          key={category.id}
         >
           {category.image && (
             <Image
@@ -82,11 +89,15 @@ const Categories = () => {
           )}
           <ThemedText
             type="xsmall"
-            style={{ textAlign: 'center', marginTop: 4 }}
+            style={{
+              textAlign: 'center',
+              marginTop: 4,
+              color: Colors[colorScheme].textPrimary,
+            }}
           >
             {category.name}
           </ThemedText>
-        </ThemedView>
+        </ThemedPressable>
       ))}
     </ScrollView>
   );

@@ -8,6 +8,7 @@ export interface Product {
   categoryId?: string;
   inStock?: boolean;
   rating?: number;
+  reviewCount?: number;
 }
 
 // Category types
