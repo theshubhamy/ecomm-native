@@ -114,7 +114,7 @@ export default function SignUp() {
       return;
     }
 
-    dispatch(signUp({ email, password }));
+    dispatch(signUp({ name, email, password }));
   };
 
   return (

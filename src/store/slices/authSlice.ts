@@ -19,18 +19,21 @@ const initialState: AuthState = {
 };
 
 // Async thunks for authentication
-export const initializeAuth = createAsyncThunk(
-  'auth/initialize',
-  async () => {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return session;
-  }
-);
+export const initializeAuth = createAsyncThunk('auth/initialize', async () => {
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+  if (error) throw error;
+  return session;
+});
 
 export const signIn = createAsyncThunk(
   'auth/signIn',
-  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
+  async (
+    { email, password }: { email: string; password: string },
+    { rejectWithValue },
+  ) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -41,27 +44,44 @@ export const signIn = createAsyncThunk(
       }
       return data;
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Sign in failed');
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Sign in failed',
+      );
     }
-  }
+  },
 );
 
 export const signUp = createAsyncThunk(
   'auth/signUp',
-  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
+  async (
+    {
+      name,
+      email,
+      password,
+    }: { name: string; email: string; password: string },
+    { rejectWithValue },
+  ) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            display_name: name,
+          },
+        },
       });
+
       if (error) {
         return rejectWithValue(error.message);
       }
       return data;
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Sign up failed');
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Sign up failed',
+      );
     }
-  }
+  },
 );
 
 export const signOut = createAsyncThunk(
@@ -73,27 +93,32 @@ export const signOut = createAsyncThunk(
         return rejectWithValue(error.message);
       }
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Sign out failed');
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Sign out failed',
+      );
     }
-  }
+  },
 );
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setSession: (state, action: PayloadAction<{ session: Session | null; user: User | null }>) => {
+    setSession: (
+      state,
+      action: PayloadAction<{ session: Session | null; user: User | null }>,
+    ) => {
       state.session = action.payload.session;
       state.user = action.payload.user;
     },
-    clearError: (state) => {
+    clearError: state => {
       state.error = null;
     },
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     // Initialize auth
     builder
-      .addCase(initializeAuth.pending, (state) => {
+      .addCase(initializeAuth.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -111,7 +136,7 @@ const authSlice = createSlice({
 
     // Sign in
     builder
-      .addCase(signIn.pending, (state) => {
+      .addCase(signIn.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -128,7 +153,7 @@ const authSlice = createSlice({
 
     // Sign up
     builder
-      .addCase(signUp.pending, (state) => {
+      .addCase(signUp.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -145,11 +170,11 @@ const authSlice = createSlice({
 
     // Sign out
     builder
-      .addCase(signOut.pending, (state) => {
+      .addCase(signOut.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(signOut.fulfilled, (state) => {
+      .addCase(signOut.fulfilled, state => {
         state.isLoading = false;
         state.session = null;
         state.user = null;
@@ -164,4 +189,3 @@ const authSlice = createSlice({
 
 export const { setSession, clearError } = authSlice.actions;
 export default authSlice.reducer;
-
