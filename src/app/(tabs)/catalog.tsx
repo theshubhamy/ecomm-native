@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 
@@ -24,7 +23,6 @@ import { Category } from '@/types';
 
 export default function Catalog() {
   const colorScheme = useColorScheme();
-  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const {
     items: products,
@@ -289,9 +287,6 @@ export default function Catalog() {
               keyExtractor={item => item.id.toString()}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.productsList}
-              ListFooterComponent={
-                <ThemedView style={{ height: insets.bottom + 100 }} />
-              }
             />
           )}
         </ThemedView>
