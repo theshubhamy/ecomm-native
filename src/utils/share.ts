@@ -75,14 +75,18 @@ async function cleanupFile(
   fileUri: string,
   delay: number = 10000,
 ): Promise<void> {
-  setTimeout(async () => {
-    try {
-      await FileSystem.deleteAsync(fileUri, { idempotent: true });
-    } catch {
-      // Cleanup error is not critical
-      console.log('File cleanup skipped');
-    }
-  }, delay);
+  return new Promise<void>(resolve => {
+    setTimeout(async () => {
+      try {
+        await FileSystem.deleteAsync(fileUri, { idempotent: true });
+      } catch {
+        // Cleanup error is not critical
+        console.log('File cleanup skipped');
+      } finally {
+        resolve();
+      }
+    }, delay);
+  });
 }
 
 /**

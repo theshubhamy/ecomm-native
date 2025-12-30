@@ -22,6 +22,7 @@ const MAPPING = {
   'cart.fill': 'shopping-cart',
   'managesearch.fill': 'manage-search',
   'favorite.fill': 'favorite',
+  favorite: 'favorite-border',
   'person.fill': 'person',
   'ellipsis.fill': 'more-vert',
   'ellipsis.circle.fill': 'more-horiz',

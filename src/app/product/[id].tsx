@@ -319,7 +319,7 @@ export default function ProductDetail() {
               ]}
             >
               <IconSymbol
-                name={isFavorite ? 'favorite.fill' : 'favorite.fill'}
+                name={isFavorite ? 'favorite.fill' : 'favorite'}
                 size={20}
                 color={
                   headerScrolled
