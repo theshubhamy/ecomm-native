@@ -39,7 +39,13 @@ export const ThemedPressable = forwardRef<any, ThemedViewProps>(
     return (
       <Pressable
         ref={ref}
-        style={[{ backgroundColor }, style]}
+        style={({ pressed }) => [
+          { backgroundColor },
+          style,
+          pressed && { opacity: 0.5 },
+        ]}
+        accessible={true}
+        accessibilityRole="button"
         {...otherProps}
       />
     );

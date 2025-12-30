@@ -1,12 +1,19 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Product } from '@/types';
 import { supabase } from '@/utils/supabase';
+import { cacheProducts, getCachedProducts, setLastSyncTime } from '@/utils/cache';
 
 interface ProductsState {
   items: Product[];
   isLoading: boolean;
   error: string | null;
   selectedProduct: Product | null;
+  inventoryUpdates: {
+    [productId: string | number]: {
+      inStock: boolean;
+      lastUpdated?: number;
+    };
+  };
 }
 
 const initialState: ProductsState = {
@@ -14,6 +21,7 @@ const initialState: ProductsState = {
   isLoading: false,
   error: null,
   selectedProduct: null,
+  inventoryUpdates: {},
 };
 
 // Fetch all products
@@ -21,12 +29,48 @@ export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async (_, { rejectWithValue }) => {
     try {
+      // Try to get cached products first
+      const cachedProducts = await getCachedProducts();
+      if (cachedProducts && cachedProducts.length > 0) {
+        // Return cached data immediately, then fetch fresh data in background
+        setTimeout(async () => {
+          try {
+            const { data, error } = await supabase
+              .from('products')
+              .select('*')
+              .order('created_at', { ascending: false });
+            if (!error && data) {
+              const products: Product[] = (data || []).map((item: any) => ({
+                id: item.id,
+                name: item.name || item.title || 'Unnamed Product',
+                imageUrl: item.image_url || item.image || item.imageUrl,
+                price: item.price,
+                description: item.description,
+                categoryId: item.category_id || item.categoryId,
+                inStock: item.in_stock ?? item.inStock ?? true,
+                rating: item.rating,
+              }));
+              await cacheProducts(products);
+              await setLastSyncTime();
+            }
+          } catch (error) {
+            console.error('Background product sync failed:', error);
+          }
+        }, 0);
+        return cachedProducts as Product[];
+      }
+
+      // No cache, fetch from server
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
+        // If fetch fails and we have cache, return cache
+        if (cachedProducts) {
+          return cachedProducts as Product[];
+        }
         return rejectWithValue(error.message);
       }
 
@@ -42,8 +86,19 @@ export const fetchProducts = createAsyncThunk(
         rating: item.rating,
       }));
 
+      // Cache the fetched data
+      if (products.length > 0) {
+        await cacheProducts(products);
+        await setLastSyncTime();
+      }
+
       return products;
     } catch (error) {
+      // On error, try to return cached data
+      const cachedProducts = await getCachedProducts();
+      if (cachedProducts) {
+        return cachedProducts as Product[];
+      }
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch products');
     }
   }
@@ -148,12 +203,94 @@ export const fetchProductById = createAsyncThunk(
   }
 );
 
+// Store channel reference outside Redux to avoid serialization issues
+let inventoryChannel: ReturnType<typeof supabase.channel> | null = null;
+
+// Subscribe to real-time inventory updates
+export const subscribeToInventoryUpdates = createAsyncThunk(
+  'products/subscribeToInventoryUpdates',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      // Unsubscribe from existing channel if it exists
+      if (inventoryChannel) {
+        await supabase.removeChannel(inventoryChannel);
+      }
+
+      inventoryChannel = supabase
+        .channel('inventory-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'products',
+          },
+          (payload) => {
+            if (payload.new) {
+              const product = payload.new as any;
+              dispatch(
+                updateProductInventory({
+                  productId: product.id,
+                  inStock: product.in_stock ?? true,
+                })
+              );
+            }
+          }
+        )
+        .subscribe();
+
+      // Return a simple serializable value instead of the channel object
+      return { subscribed: true, channelId: 'inventory-updates' };
+    } catch (error) {
+      console.error('Error subscribing to inventory updates:', error);
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to subscribe to inventory updates'
+      );
+    }
+  }
+);
+
+// Unsubscribe from inventory updates
+export const unsubscribeFromInventoryUpdates = createAsyncThunk(
+  'products/unsubscribeFromInventoryUpdates',
+  async () => {
+    if (inventoryChannel) {
+      await supabase.removeChannel(inventoryChannel);
+      inventoryChannel = null;
+    }
+    return { unsubscribed: true };
+  }
+);
+
 const productsSlice = createSlice({
   name: 'products',
   initialState,
   reducers: {
     setSelectedProduct: (state, action: PayloadAction<Product | null>) => {
       state.selectedProduct = action.payload;
+    },
+    updateProductInventory: (
+      state,
+      action: PayloadAction<{ productId: string | number; inStock: boolean }>
+    ) => {
+      const { productId, inStock } = action.payload;
+
+      // Update in items array
+      const product = state.items.find((p) => p.id === productId);
+      if (product) {
+        product.inStock = inStock;
+      }
+
+      // Update selected product if it matches
+      if (state.selectedProduct?.id === productId) {
+        state.selectedProduct.inStock = inStock;
+      }
+
+      // Store update timestamp
+      state.inventoryUpdates[productId] = {
+        inStock,
+        lastUpdated: Date.now(),
+      };
     },
     clearError: (state) => {
       state.error = null;
@@ -229,6 +366,6 @@ const productsSlice = createSlice({
   },
 });
 
-export const { setSelectedProduct, clearError, clearProducts } = productsSlice.actions;
+export const { setSelectedProduct, updateProductInventory, clearError, clearProducts } = productsSlice.actions;
 export default productsSlice.reducer;
 

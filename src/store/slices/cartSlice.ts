@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Product } from '@/types';
 import { supabase } from '@/utils/supabase';
+import { cacheCart, getCachedCart } from '@/utils/cache';
 
 export interface CartItem {
   product: Product;
@@ -34,12 +35,53 @@ export const fetchCart = createAsyncThunk(
   'cart/fetchCart',
   async (userId: string, { rejectWithValue }) => {
     try {
+      // Try to get cached cart first
+      const cachedCart = await getCachedCart();
+      if (cachedCart) {
+        // Return cached data immediately, then sync in background
+        setTimeout(async () => {
+          try {
+            const { data, error } = await supabase
+              .from('cart_items')
+              .select('*, products(*)')
+              .eq('user_id', userId);
+
+            if (!error && data) {
+              const cartItems: CartItem[] = (data || []).map((item: any) => ({
+                product: {
+                  id: item.products?.id || item.product_id,
+                  name: item.products?.name || 'Unknown Product',
+                  imageUrl: item.products?.image_url || item.products?.imageUrl,
+                  price: item.products?.price || 0,
+                  description: item.products?.description,
+                  categoryId: item.products?.category_id,
+                  inStock: item.products?.in_stock ?? true,
+                  rating: item.products?.rating,
+                },
+                quantity: item.quantity || 1,
+              }));
+
+              const total = calculateTotal(cartItems);
+              await cacheCart({ items: cartItems, total });
+            }
+          } catch (error) {
+            console.error('Background cart sync failed:', error);
+          }
+        }, 0);
+        return cachedCart;
+      }
+
+      // No cache, fetch from server
       const { data, error } = await supabase
         .from('cart_items')
         .select('*, products(*)')
         .eq('user_id', userId);
 
       if (error) {
+        // If fetch fails and we have cache, return cache
+        if (cachedCart) {
+          return cachedCart;
+        }
         return rejectWithValue(error.message);
       }
 
@@ -57,8 +99,19 @@ export const fetchCart = createAsyncThunk(
         quantity: item.quantity || 1,
       }));
 
-      return cartItems;
+      const total = calculateTotal(cartItems);
+      const cartDataToCache = { items: cartItems, total };
+
+      // Cache the fetched data
+      await cacheCart(cartDataToCache);
+
+      return cartDataToCache;
     } catch (error) {
+      // On error, try to return cached data
+      const cachedCart = await getCachedCart();
+      if (cachedCart) {
+        return cachedCart;
+      }
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch cart');
     }
   }
@@ -228,10 +281,14 @@ const cartSlice = createSlice({
       }
 
       state.total = calculateTotal(state.items);
+      // Cache cart after update
+      cacheCart({ items: state.items, total: state.total }).catch(console.error);
     },
     removeFromCart: (state, action: PayloadAction<string | number>) => {
       state.items = state.items.filter((item) => item.product.id !== action.payload);
       state.total = calculateTotal(state.items);
+      // Cache cart after update
+      cacheCart({ items: state.items, total: state.total }).catch(console.error);
     },
     updateQuantity: (state, action: PayloadAction<{ productId: string | number; quantity: number }>) => {
       const { productId, quantity } = action.payload;
@@ -246,10 +303,14 @@ const cartSlice = createSlice({
       }
 
       state.total = calculateTotal(state.items);
+      // Cache cart after update
+      cacheCart({ items: state.items, total: state.total }).catch(console.error);
     },
     clearCart: (state) => {
       state.items = [];
       state.total = 0;
+      // Clear cache when cart is cleared
+      cacheCart({ items: [], total: 0 }).catch(console.error);
     },
     clearError: (state) => {
       state.error = null;
@@ -264,8 +325,14 @@ const cartSlice = createSlice({
       })
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.items = action.payload;
-        state.total = calculateTotal(action.payload);
+        // Handle both old format (array) and new format (object with items and total)
+        if (Array.isArray(action.payload)) {
+          state.items = action.payload;
+          state.total = calculateTotal(state.items);
+        } else {
+          state.items = action.payload.items || [];
+          state.total = action.payload.total || calculateTotal(state.items);
+        }
         state.error = null;
       })
       .addCase(fetchCart.rejected, (state, action) => {

@@ -12,6 +12,7 @@ import { StoreProvider } from '@/store/StoreProvider';
 import { useAppSelector } from '@/store/hooks';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -24,14 +25,16 @@ export default function RootLayout() {
   }
 
   return (
-    <StoreProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <SafeAreaProvider>
-          <RootNavigator />
-        </SafeAreaProvider>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </StoreProvider>
+    <ErrorBoundary>
+      <StoreProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <SafeAreaProvider>
+            <RootNavigator />
+          </SafeAreaProvider>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </StoreProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -42,6 +45,10 @@ function RootNavigator() {
     <Stack>
       <Stack.Protected guard={!!user}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="order/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="checkout" options={{ headerShown: false }} />
+        <Stack.Screen name="address-selection" options={{ headerShown: false }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!user}>

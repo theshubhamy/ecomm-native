@@ -43,12 +43,14 @@ export const ThemedButton = forwardRef<any, ThemedViewProps>(
     );
 
     return (
-      <TouchableOpacity
-        ref={ref}
-        style={[{ backgroundColor }, style]}
-        disabled={disabled}
-        {...otherProps}
-      />
+        <TouchableOpacity
+          ref={ref}
+          style={[{ backgroundColor }, style]}
+          disabled={disabled}
+          accessible={true}
+          accessibilityRole="button"
+          {...otherProps}
+        />
     );
   },
 );
