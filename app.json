@@ -32,15 +32,7 @@
       ],
       "expo-secure-store",
       "expo-web-browser",
-      "expo-font",
-      [
-        "expo-notifications",
-        {
-          "icon": "./src/assets/images/icon.png",
-          "color": "#ffffff",
-          "sounds": []
-        }
-      ]
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,

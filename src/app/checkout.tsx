@@ -21,7 +21,6 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchSavedAddresses, setSelectedAddress } from '@/store/slices/locationSlice';
 import { clearCart } from '@/store/slices/cartSlice';
 import { createPaymentIntent, processPayment, PaymentMethod } from '@/store/slices/paymentSlice';
-import { notifyOrderConfirmed, notifyPaymentSuccess } from '@/services/notifications';
 import { Address } from '@/types';
 
 export default function Checkout() {
@@ -163,12 +162,6 @@ export default function Checkout() {
 
       // Clear cart after successful order
       dispatch(clearCart());
-
-      // Send notifications
-      await notifyOrderConfirmed(orderNumber);
-      if (selectedPaymentMethod !== 'cash') {
-        await notifyPaymentSuccess(orderNumber, finalTotal);
-      }
 
       Alert.alert(
         'Order Placed!',

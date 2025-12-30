@@ -1,25 +1,80 @@
 import { Category } from '@/types';
 import { Image } from 'expo-image';
-import React from 'react';
-import { StyleSheet } from 'react-native';
-import { CategoriesData } from '../constants/Categories';
+import React, { useEffect } from 'react';
+import { StyleSheet, ActivityIndicator } from 'react-native';
 import ScrollView from './ScrollView';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchCategories } from '@/store/slices/categoriesSlice';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 const Categories = () => {
+  const colorScheme = useColorScheme();
+  const dispatch = useAppDispatch();
+  const { items: categories, isLoading, error } = useAppSelector(
+    (state) => state.categories
+  );
+
+  useEffect(() => {
+    // Fetch categories if not already loaded
+    if (categories.length === 0 && !isLoading) {
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, categories.length, isLoading]);
+
+  if (isLoading && categories.length === 0) {
+    return (
+      <ScrollView horizontal>
+        <ThemedView style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+          <ThemedText type="xsmall" style={{ marginTop: 8 }}>
+            Loading categories...
+          </ThemedText>
+        </ThemedView>
+      </ScrollView>
+    );
+  }
+
+  if (error && categories.length === 0) {
+    return (
+      <ScrollView horizontal>
+        <ThemedView style={styles.errorContainer}>
+          <ThemedText type="xsmall" style={{ color: Colors.error }}>
+            Failed to load categories
+          </ThemedText>
+        </ThemedView>
+      </ScrollView>
+    );
+  }
+
+  if (categories.length === 0) {
+    return null;
+  }
+
   return (
-    <ScrollView horizontal>
-      {CategoriesData?.map((category: Category) => (
-        <ThemedView style={styles.categoryCard} key={category.id}>
-          <Image
-            source={category.image}
-            style={styles.categoryImage}
-            contentFit="cover"
-            transition={1000}
-            alt={category.name}
-          />
-          <ThemedText type="xsmall">{category.name}</ThemedText>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      {categories.map((category: Category) => (
+        <ThemedView
+          style={[
+            styles.categoryCard,
+            { backgroundColor: Colors[colorScheme].backgroundPaper },
+          ]}
+          key={category.id}
+        >
+          {category.image && (
+            <Image
+              source={{ uri: typeof category.image === 'string' ? category.image : '' }}
+              style={styles.categoryImage}
+              contentFit="cover"
+              transition={1000}
+              alt={category.name}
+            />
+          )}
+          <ThemedText type="xsmall" style={{ textAlign: 'center', marginTop: 4 }}>
+            {category.name}
+          </ThemedText>
         </ThemedView>
       ))}
     </ScrollView>

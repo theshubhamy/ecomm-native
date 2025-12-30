@@ -39,6 +39,12 @@ const MAPPING = {
   'checkmark.square.fill': 'check-box',
   'square': 'check-box-outline-blank',
   'creditcard.fill': 'credit-card',
+  'xmark': 'close',
+  'xmark.circle.fill': 'cancel',
+  'square.grid.2x2': 'apps',
+  'square.grid.2x2.fill': 'apps',
+  'tag': 'local-offer',
+  'tag.fill': 'local-offer',
 } as const;
 
 export function IconSymbol({

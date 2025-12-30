@@ -7,6 +7,7 @@ import wishlistReducer from './slices/wishlistSlice';
 import ordersReducer from './slices/ordersSlice';
 import offersReducer from './slices/offersSlice';
 import paymentReducer from './slices/paymentSlice';
+import categoriesReducer from './slices/categoriesSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     orders: ordersReducer,
     offers: offersReducer,
     payment: paymentReducer,
+    categories: categoriesReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

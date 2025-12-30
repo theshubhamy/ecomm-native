@@ -15,6 +15,7 @@ export interface Category {
   id: string;
   name: string;
   image: string | number; // Can be URL string or require() number
+  description?: string;
 }
 
 // User/Session types

@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { supabase } from '@/utils/supabase';
 import { Address } from '@/types';
-import { notifyOrderCancelled } from '@/services/notifications';
 
 export interface OrderItem {
   id: string;
@@ -188,11 +187,6 @@ export const cancelOrder = createAsyncThunk(
 
       if (error) {
         return rejectWithValue(error.message);
-      }
-
-      // Send notification
-      if (orderData?.order_number) {
-        await notifyOrderCancelled(orderData.order_number);
       }
 
       return data.id;

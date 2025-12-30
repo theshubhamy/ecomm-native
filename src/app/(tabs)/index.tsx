@@ -15,7 +15,7 @@ import { ProductCardSkeleton } from '@/components/SkeletonLoader';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchProducts } from '@/store/slices/productsSlice';
 import { fetchOffers } from '@/store/slices/offersSlice';
-import { notifyOfferAvailable } from '@/services/notifications';
+import { fetchCategories } from '@/store/slices/categoriesSlice';
 import { useEffect } from 'react';
 
 export default function HomeScreen() {
@@ -28,16 +28,10 @@ export default function HomeScreen() {
   } = useAppSelector(state => state.products);
 
   useEffect(() => {
-    // Fetch products and offers on mount
+    // Fetch products, offers, and categories on mount
     dispatch(fetchProducts());
-    dispatch(fetchOffers()).then((result) => {
-      // Notify about new offers
-      if (fetchOffers.fulfilled.match(result) && result.payload.length > 0) {
-        // Notify about the first active offer
-        const firstOffer = result.payload[0];
-        notifyOfferAvailable(firstOffer.title).catch(console.error);
-      }
-    });
+    dispatch(fetchOffers());
+    dispatch(fetchCategories());
   }, [dispatch]);
 
   return (
