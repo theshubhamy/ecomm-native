@@ -170,66 +170,12 @@ export default function Cart() {
       <HeaderView>
         <ThemedView style={styles.titleContainer}>
           <ThemedText type="subtitle">Checkout</ThemedText>
-          <ThemedPressable style={styles.dotsButton}>
-            <IconSymbol
-              name="paperplane.fill"
-              size={20}
-              color={Colors[colorScheme].icon}
-            />
-            <ThemedText
-              type="xsmall"
-              style={{
-                color: Colors[colorScheme].textSecondary,
-                marginLeft: 4,
-              }}
-            >
-              Share
-            </ThemedText>
-          </ThemedPressable>
         </ThemedView>
       </HeaderView>
 
       <ScrollView>
         {/* Delivery Info Banner */}
-        {items.length > 0 && (
-          <ThemedView
-            style={[
-              styles.deliveryBanner,
-              { backgroundColor: Colors.success + '15' },
-            ]}
-          >
-            <ThemedText
-              type="xsmall"
-              style={{
-                color: Colors.success,
-                fontWeight: '700',
-                marginRight: 6,
-              }}
-            >
-              ⏱️
-            </ThemedText>
-            <ThemedText
-              type="small"
-              style={{
-                color: Colors.success,
-                marginLeft: 6,
-                fontWeight: '600',
-              }}
-            >
-              Delivery in 15-30 minutes
-            </ThemedText>
-          </ThemedView>
-        )}
-        {items.length > 0 && (
-          <ThemedView style={styles.shipmentInfo}>
-            <ThemedText
-              type="small"
-              style={{ color: Colors[colorScheme].textSecondary }}
-            >
-              Shipment of {items.length} {items.length === 1 ? 'item' : 'items'}
-            </ThemedText>
-          </ThemedView>
-        )}
+
         {isLoading ? (
           <ThemedView style={styles.cartItemsContainer}>
             {[1, 2, 3].map(i => (
@@ -260,6 +206,29 @@ export default function Cart() {
         ) : (
           <>
             <ThemedView style={styles.cartItemsContainer}>
+              {items.length > 0 && (
+                <ThemedView style={[styles.deliveryBanner]}>
+                  <ThemedView>
+                    <IconSymbol
+                      name="clock.fill"
+                      size={28}
+                      color={Colors.primary}
+                    />
+                  </ThemedView>
+                  <ThemedView>
+                    <ThemedText type="defaultSemiBold">
+                      Delivery in 15 minutes 🚀
+                    </ThemedText>
+                    <ThemedText
+                      type="xsmall"
+                      style={{ color: Colors[colorScheme].textSecondary }}
+                    >
+                      Shipment of {items.length}
+                      {items.length === 1 ? ' item' : ' items'}
+                    </ThemedText>
+                  </ThemedView>
+                </ThemedView>
+              )}
               {items.map(item => {
                 const itemPrice = item.product.price || 0;
                 const originalPrice =
@@ -364,15 +333,14 @@ export default function Cart() {
                           type="xsmall"
                           style={[
                             styles.originalPrice,
-                            { color: Colors[colorScheme].textSecondary },
+                            { color: Colors[colorScheme].textPrimary },
+                            { textDecorationLine: 'line-through' },
                           ]}
                         >
                           ₹{originalTotal.toFixed(0)}
                         </ThemedText>
                       )}
-                      <ThemedText type="small" style={styles.itemTotal}>
-                        ₹{itemTotal.toFixed(0)}
-                      </ThemedText>
+                      <ThemedText>₹{itemTotal.toFixed(0)}</ThemedText>
                     </ThemedView>
                   </ThemedView>
                 );
@@ -794,19 +762,22 @@ const styles = StyleSheet.create({
   deliveryBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 8,
-    borderRadius: 10,
+    justifyContent: 'flex-start',
+    gap: 10,
+    borderBottomWidth: 0.5,
+    paddingBottom: 14,
+    borderBottomColor: Colors.light.textSecondary + '20',
   },
   shipmentInfo: {
-    paddingHorizontal: 16,
     paddingVertical: 10,
     marginBottom: 4,
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   cartItemsContainer: {
     paddingHorizontal: 16,
+    borderTopStartRadius: 12,
+    borderTopEndRadius: 12,
     paddingTop: 8,
     paddingBottom: 16,
     gap: 16,
@@ -869,11 +840,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 2,
   },
-  itemTotal: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.primary,
-  },
+
   summaryContainer: {
     paddingHorizontal: 16,
     paddingTop: 20,

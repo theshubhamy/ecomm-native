@@ -51,6 +51,7 @@ const MAPPING = {
   star: 'star-border',
   'cash.fill': 'attach-money',
   cash: 'attach-money',
+  'clock.fill': 'access-time',
 } as const;
 
 export function IconSymbol({
