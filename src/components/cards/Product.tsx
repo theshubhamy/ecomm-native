@@ -1,14 +1,41 @@
 import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme.web';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Product as ProductType } from '@/types';
 import { Image } from 'expo-image';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Alert } from 'react-native';
 import { ThemedButton } from '../ThemedButton';
 import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
+import { ThemedPressable } from '../ThemedPressable';
 import { IconSymbol } from '../ui/IconSymbol';
-const Product = ({ item }: any) => {
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { addToCart, addToCartDB } from '@/store/slices/cartSlice';
+
+interface ProductProps {
+  item: ProductType;
+}
+
+const Product = ({ item }: ProductProps) => {
   const colorScheme = useColorScheme();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+
+  const handleAddToCart = () => {
+    if (user?.id) {
+      // Add to cart in database
+      dispatch(addToCartDB({ userId: user.id, productId: item.id, quantity: 1 }));
+    } else {
+      // Add to local cart
+      dispatch(addToCart({ product: item, quantity: 1 }));
+    }
+    Alert.alert('Success', 'Product added to cart!');
+  };
+
+  const handleAddToWishlist = () => {
+    // TODO: Implement wishlist functionality
+    Alert.alert('Coming Soon', 'Wishlist feature coming soon!');
+  };
   return (
     <ThemedView
       style={{
@@ -16,18 +43,33 @@ const Product = ({ item }: any) => {
         backgroundColor: Colors[colorScheme].backgroundPaper,
       }}
     >
-      <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
-      <ThemedText type="small">Product Name{item.id}</ThemedText>
+      <Image
+        source={
+          item.imageUrl
+            ? { uri: item.imageUrl }
+            : require('../../assets/images/icon.png')
+        }
+        style={styles.productImage}
+        contentFit="cover"
+      />
+      <ThemedText type="small" numberOfLines={2}>
+        {item.name}
+      </ThemedText>
       <ThemedView style={styles.flexDirectionRow}>
-        <ThemedText style={styles.productPrice}>$99.99</ThemedText>
-        <ThemedButton style={styles.productAddToCartButton}>
+        <ThemedText style={styles.productPrice}>
+          {item.price ? `$${item.price.toFixed(2)}` : 'Price N/A'}
+        </ThemedText>
+        <ThemedButton
+          style={styles.productAddToCartButton}
+          onPress={handleAddToCart}
+        >
           <IconSymbol name="cart.fill" size={28} color={Colors.secondary} />
         </ThemedButton>
       </ThemedView>
 
-      <ThemedView style={styles.heartButton}>
+      <ThemedPressable style={styles.heartButton} onPress={handleAddToWishlist}>
         <IconSymbol name="favorite.fill" size={28} color={Colors.error} />
-      </ThemedView>
+      </ThemedPressable>
     </ThemedView>
   );
 };

@@ -16,6 +16,8 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'chevron.left': 'chevron-left',
+  'chevron.down': 'keyboard-arrow-down',
   'cart.fill': 'shopping-cart',
   'managesearch.fill': 'manage-search',
   'favorite.fill': 'favorite',
@@ -26,6 +28,16 @@ const MAPPING = {
   'location.fill': 'location-on',
   'search.fill': 'search',
   'microphone.fill': 'mic',
+  'envelope.fill': 'email',
+  'lock.fill': 'lock',
+  'eye.fill': 'visibility',
+  'eye.slash.fill': 'visibility-off',
+  'plus': 'add',
+  'minus': 'remove',
+  'pencil': 'edit',
+  'trash.fill': 'delete',
+  'checkmark.square.fill': 'check-box',
+  'square': 'check-box-outline-blank',
 } as const;
 
 export function IconSymbol({

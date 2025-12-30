@@ -1,27 +1,85 @@
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import React from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { getCurrentLocation, reverseGeocode, fetchSavedAddresses } from '@/store/slices/locationSlice';
+import { router } from 'expo-router';
+import React, { useEffect } from 'react';
 import { ThemedPressable } from './ThemedPressable';
 import { ThemedText } from './ThemedText';
+import { ThemedView } from './ThemedView';
+import { IconSymbol } from './ui/IconSymbol';
 
 const Location = () => {
   const colorScheme = useColorScheme();
+  const dispatch = useAppDispatch();
+  const { selectedAddress, isLoading, savedAddresses } = useAppSelector(
+    (state) => state.location
+  );
+  const { user } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    // Fetch saved addresses if user is logged in
+    if (user?.id) {
+      dispatch(fetchSavedAddresses(user.id));
+    }
+  }, [user, dispatch]);
+
+  const handleLocationPress = () => {
+    // Navigate to address selection screen
+    router.push('/address-selection');
+  };
+
+  const handleGetCurrentLocation = async () => {
+    try {
+      const locationResult = await dispatch(getCurrentLocation());
+      if (getCurrentLocation.fulfilled.match(locationResult)) {
+        await dispatch(reverseGeocode(locationResult.payload));
+      }
+    } catch (error) {
+      console.error('Failed to get location:', error);
+    }
+  };
+
+  const displayAddress = selectedAddress
+    ? `${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.pincode}`
+    : savedAddresses.length > 0
+      ? `${savedAddresses[0].city}, ${savedAddresses[0].state} ${savedAddresses[0].pincode}`
+      : 'Select delivery address';
+
   return (
     <ThemedPressable
+      onPress={handleLocationPress}
       style={{
-        flexDirection: 'column',
+        flexDirection: 'row',
         alignItems: 'center',
         padding: 8,
         borderRadius: 10,
+        gap: 8,
+        flex: 1,
       }}
     >
-      <ThemedText
-        type="xsmall"
-        style={{ color: Colors[colorScheme].textSecondary }}
-      >
-        Delivery address
-      </ThemedText>
-      <ThemedText type="small"> Purnea Bihar, 854301</ThemedText>
+      <IconSymbol
+        name="location.fill"
+        size={16}
+        color={Colors.primary}
+      />
+      <ThemedView style={{ flex: 1 }}>
+        <ThemedText
+          type="xsmall"
+          style={{ color: Colors[colorScheme].textSecondary }}
+          numberOfLines={1}
+        >
+          Delivery address
+        </ThemedText>
+        <ThemedText type="small" numberOfLines={1}>
+          {displayAddress}
+        </ThemedText>
+      </ThemedView>
+      <IconSymbol
+        name="chevron.down"
+        size={14}
+        color={Colors[colorScheme].textSecondary}
+      />
     </ThemedPressable>
   );
 };

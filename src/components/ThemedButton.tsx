@@ -22,6 +22,7 @@ export type ThemedViewProps = ViewProps & {
   colorName?: ThemeColorName;
   onPress?: (event: GestureResponderEvent) => void;
   style?: ViewProps['style'];
+  disabled?: boolean;
 };
 
 export const ThemedButton = forwardRef<any, ThemedViewProps>(
@@ -31,6 +32,7 @@ export const ThemedButton = forwardRef<any, ThemedViewProps>(
       lightColor,
       darkColor,
       colorName = 'backgroundPaper',
+      disabled,
       ...otherProps
     },
     ref,
@@ -44,6 +46,7 @@ export const ThemedButton = forwardRef<any, ThemedViewProps>(
       <TouchableOpacity
         ref={ref}
         style={[{ backgroundColor }, style]}
+        disabled={disabled}
         {...otherProps}
       />
     );

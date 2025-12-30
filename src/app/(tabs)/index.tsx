@@ -7,10 +7,26 @@ import TopBar from '@/components/TopBar';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { Product } from '@/types';
 import { FlashList } from '@shopify/flash-list';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, ActivityIndicator } from 'react-native';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchProducts } from '@/store/slices/productsSlice';
+import { useEffect } from 'react';
+
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
+  const dispatch = useAppDispatch();
+  const {
+    items: products,
+    isLoading,
+    error,
+  } = useAppSelector(state => state.products);
+
+  useEffect(() => {
+    // Fetch products on mount
+    dispatch(fetchProducts());
+  }, [dispatch]);
 
   return (
     <ThemedView
@@ -71,23 +87,41 @@ export default function HomeScreen() {
               />
             </ThemedView>
           </ThemedView>
-          <FlashList
-            data={Array.from({ length: 20 }, (_, i) => ({
-              id: i,
-              name: `Item ${i + 1}`,
-            }))}
-            renderItem={({ item }: any) => (
-              <ProductCard item={item} key={item.id} />
-            )}
-            overrideItemLayout={(layout, item) => {
-              layout.span = item.span; // Set span
-            }}
-            numColumns={2}
-            estimatedItemSize={200}
-            keyExtractor={(item: any) => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-            ListFooterComponent={<ThemedView style={{ height: 100 }} />}
-          />
+          {isLoading ? (
+            <ThemedView style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={Colors.primary} />
+              <ThemedText type="small" style={{ marginTop: 16 }}>
+                Loading products...
+              </ThemedText>
+            </ThemedView>
+          ) : error ? (
+            <ThemedView style={styles.errorContainer}>
+              <ThemedText type="subtitle" style={{ color: Colors.error }}>
+                Error loading products
+              </ThemedText>
+              <ThemedText type="small" style={{ marginTop: 8 }}>
+                {error}
+              </ThemedText>
+            </ThemedView>
+          ) : products.length === 0 ? (
+            <ThemedView style={styles.emptyContainer}>
+              <ThemedText type="subtitle">No products available</ThemedText>
+              <ThemedText type="small" style={{ marginTop: 8 }}>
+                Check back later for new products
+              </ThemedText>
+            </ThemedView>
+          ) : (
+            <FlashList
+              data={products}
+              renderItem={({ item }: { item: Product }) => (
+                <ProductCard item={item} key={item.id} />
+              )}
+              numColumns={2}
+              keyExtractor={(item: Product) => item.id.toString()}
+              showsVerticalScrollIndicator={false}
+              ListFooterComponent={<ThemedView style={{ height: 100 }} />}
+            />
+          )}
         </ThemedView>
       </ScrollView>
     </ThemedView>
@@ -117,11 +151,22 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
   },
 });

@@ -8,18 +8,6 @@
     "scheme": "ecommnative",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.theshubham.ecomm-native"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
-      "package": "com.theshubham.ecommnative"
-    },
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -36,8 +24,36 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store"
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location for delivery services."
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-font"
     ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.theshubham.ecomm-native",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to find nearby delivery addresses and provide accurate delivery services.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to find nearby delivery addresses and provide accurate delivery services."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/images/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.theshubham.ecommnative",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
     "experiments": {
       "typedRoutes": true
     }

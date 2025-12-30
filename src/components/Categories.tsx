@@ -1,14 +1,16 @@
+import { Category } from '@/types';
 import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { CategoriesData } from '../constants/Categories'; // Adjust the import path as necessary
+import { CategoriesData } from '../constants/Categories';
 import ScrollView from './ScrollView';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
+
 const Categories = () => {
   return (
     <ScrollView horizontal>
-      {CategoriesData?.map((category: any) => (
+      {CategoriesData?.map((category: Category) => (
         <ThemedView style={styles.categoryCard} key={category.id}>
           <Image
             source={category.image}

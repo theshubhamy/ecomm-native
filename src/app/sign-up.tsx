@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { signIn, clearError } from '@/store/slices/authSlice';
+import { signUp, clearError } from '@/store/slices/authSlice';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -22,14 +22,18 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
-export default function SignIn() {
+export default function SignUp() {
   const dispatch = useAppDispatch();
   const { isLoading, error, user } = useAppSelector(state => state.auth);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
 
@@ -43,7 +47,7 @@ export default function SignIn() {
   // Show error alert when error occurs
   useEffect(() => {
     if (error) {
-      Alert.alert('Sign In Failed', error, [
+      Alert.alert('Sign Up Failed', error, [
         {
           text: 'OK',
           onPress: () => dispatch(clearError()),
@@ -52,42 +56,65 @@ export default function SignIn() {
     }
   }, [error, dispatch]);
 
+  const validateName = (nameValue: string) => {
+    if (!nameValue.trim()) {
+      setErrors(prev => ({ ...prev, name: 'Name is required' }));
+      return false;
+    }
+    if (nameValue.trim().length < 2) {
+      setErrors(prev => ({
+        ...prev,
+        name: 'Name must be at least 2 characters',
+      }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, name: '' }));
+    return true;
+  };
+
   const validateEmail = (emailValue: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailValue) {
-      setEmailError('Email is required');
+      setErrors(prev => ({ ...prev, email: 'Email is required' }));
       return false;
     }
     if (!emailRegex.test(emailValue)) {
-      setEmailError('Please enter a valid email address');
+      setErrors(prev => ({
+        ...prev,
+        email: 'Please enter a valid email address',
+      }));
       return false;
     }
-    setEmailError('');
+    setErrors(prev => ({ ...prev, email: '' }));
     return true;
   };
 
   const validatePassword = (passwordValue: string) => {
     if (!passwordValue) {
-      setPasswordError('Password is required');
+      setErrors(prev => ({ ...prev, password: 'Password is required' }));
       return false;
     }
     if (passwordValue.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+      setErrors(prev => ({
+        ...prev,
+        password: 'Password must be at least 6 characters',
+      }));
       return false;
     }
-    setPasswordError('');
+    setErrors(prev => ({ ...prev, password: '' }));
     return true;
   };
 
-  const handleSignIn = async () => {
+  const handleSignUp = async () => {
+    const isNameValid = validateName(name);
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
 
-    if (!isEmailValid || !isPasswordValid) {
+    if (!isNameValid || !isEmailValid || !isPasswordValid) {
       return;
     }
 
-    dispatch(signIn({ email, password }));
+    dispatch(signUp({ email, password }));
   };
 
   return (
@@ -141,11 +168,11 @@ export default function SignIn() {
               { color: Colors[colorScheme].textSecondary },
             ]}
           >
-            Fast delivery, right to your door
+            Create your account to get started
           </ThemedText>
         </ThemedView>
 
-        {/* Sign In Form */}
+        {/* Sign Up Form */}
         <ThemedView
           style={[
             styles.formContainer,
@@ -153,7 +180,7 @@ export default function SignIn() {
           ]}
         >
           <ThemedText type="subtitle" style={styles.welcomeText}>
-            Welcome Back
+            Create Account
           </ThemedText>
           <ThemedText
             type="small"
@@ -162,8 +189,63 @@ export default function SignIn() {
               { color: Colors[colorScheme].textSecondary },
             ]}
           >
-            Sign in to continue shopping
+            Sign up to start shopping
           </ThemedText>
+
+          {/* Name Input */}
+          <ThemedView style={styles.inputContainer}>
+            <ThemedText
+              type="xsmall"
+              style={[
+                styles.label,
+                { color: Colors[colorScheme].textSecondary },
+              ]}
+            >
+              Full Name
+            </ThemedText>
+            <ThemedView
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: Colors[colorScheme].backgroundPaper,
+                  borderColor: errors.name
+                    ? Colors.error
+                    : Colors[colorScheme].textSecondary + '30',
+                },
+              ]}
+            >
+              <IconSymbol
+                name="person.fill"
+                size={20}
+                color={Colors[colorScheme].textSecondary}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    color: Colors[colorScheme].textPrimary,
+                  },
+                ]}
+                placeholder="Enter your full name"
+                placeholderTextColor={Colors[colorScheme].textSecondary}
+                value={name}
+                onChangeText={text => {
+                  setName(text);
+                  if (errors.name) validateName(text);
+                }}
+                onBlur={() => validateName(name)}
+                autoCapitalize="words"
+                autoComplete="name"
+                autoCorrect={false}
+              />
+            </ThemedView>
+            {errors.name ? (
+              <ThemedText type="xsmall" style={styles.errorText}>
+                {errors.name}
+              </ThemedText>
+            ) : null}
+          </ThemedView>
 
           {/* Email Input */}
           <ThemedView style={styles.inputContainer}>
@@ -181,7 +263,7 @@ export default function SignIn() {
                 styles.inputWrapper,
                 {
                   backgroundColor: Colors[colorScheme].backgroundPaper,
-                  borderColor: emailError
+                  borderColor: errors.email
                     ? Colors.error
                     : Colors[colorScheme].textSecondary + '30',
                 },
@@ -205,7 +287,7 @@ export default function SignIn() {
                 value={email}
                 onChangeText={text => {
                   setEmail(text);
-                  if (emailError) validateEmail(text);
+                  if (errors.email) validateEmail(text);
                 }}
                 onBlur={() => validateEmail(email)}
                 autoCapitalize="none"
@@ -214,9 +296,9 @@ export default function SignIn() {
                 autoCorrect={false}
               />
             </ThemedView>
-            {emailError ? (
+            {errors.email ? (
               <ThemedText type="xsmall" style={styles.errorText}>
-                {emailError}
+                {errors.email}
               </ThemedText>
             ) : null}
           </ThemedView>
@@ -237,7 +319,7 @@ export default function SignIn() {
                 styles.inputWrapper,
                 {
                   backgroundColor: Colors[colorScheme].backgroundPaper,
-                  borderColor: passwordError
+                  borderColor: errors.password
                     ? Colors.error
                     : Colors[colorScheme].textSecondary + '30',
                 },
@@ -256,17 +338,17 @@ export default function SignIn() {
                     color: Colors[colorScheme].textPrimary,
                   },
                 ]}
-                placeholder="Enter your password"
+                placeholder="Create a password"
                 placeholderTextColor={Colors[colorScheme].textSecondary}
                 value={password}
                 onChangeText={text => {
                   setPassword(text);
-                  if (passwordError) validatePassword(text);
+                  if (errors.password) validatePassword(text);
                 }}
                 onBlur={() => validatePassword(password)}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoComplete="password"
+                autoComplete="password-new"
                 autoCorrect={false}
               />
               <TouchableOpacity
@@ -280,35 +362,19 @@ export default function SignIn() {
                 />
               </TouchableOpacity>
             </ThemedView>
-            {passwordError ? (
+            {errors.password ? (
               <ThemedText type="xsmall" style={styles.errorText}>
-                {passwordError}
+                {errors.password}
               </ThemedText>
             ) : null}
           </ThemedView>
 
-          {/* Forgot Password */}
-          <TouchableOpacity
-            onPress={() => {
-              // TODO: Implement forgot password
-              Alert.alert(
-                'Coming Soon',
-                'Forgot password feature coming soon!',
-              );
-            }}
-            style={styles.forgotPassword}
-          >
-            <ThemedText type="small" style={{ color: Colors.primary }}>
-              Forgot Password?
-            </ThemedText>
-          </TouchableOpacity>
-
-          {/* Sign In Button */}
+          {/* Sign Up Button */}
           <ThemedButton
-            onPress={handleSignIn}
+            onPress={handleSignUp}
             disabled={isLoading}
             style={[
-              styles.signInButton,
+              styles.signUpButton,
               {
                 backgroundColor: Colors.primary,
                 opacity: isLoading ? 0.6 : 1,
@@ -322,7 +388,7 @@ export default function SignIn() {
                 type="defaultSemiBold"
                 style={{ color: Colors.black }}
               >
-                Sign In
+                Create Account
               </ThemedText>
             )}
           </ThemedButton>
@@ -352,20 +418,20 @@ export default function SignIn() {
             />
           </ThemedView>
 
-          {/* Sign Up Link */}
-          <ThemedView style={styles.signUpContainer}>
+          {/* Sign In Link */}
+          <ThemedView style={styles.signInContainer}>
             <ThemedText
               type="small"
               style={{ color: Colors[colorScheme].textSecondary }}
             >
-              Don&apos;t have an account?{' '}
+              Already have an account?{' '}
             </ThemedText>
-            <TouchableOpacity onPress={() => router.push('/sign-up')}>
+            <TouchableOpacity onPress={() => router.push('/sign-in')}>
               <ThemedText
                 type="small"
                 style={{ color: Colors.primary, fontWeight: '600' }}
               >
-                Sign Up
+                Sign In
               </ThemedText>
             </TouchableOpacity>
           </ThemedView>
@@ -481,11 +547,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginVertical: 4,
-  },
-  signInButton: {
+  signUpButton: {
     height: 44,
     borderRadius: 8,
     justifyContent: 'center',
@@ -510,7 +572,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     fontSize: 12,
   },
-  signUpContainer: {
+  signInContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',

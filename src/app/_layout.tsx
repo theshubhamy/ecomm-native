@@ -8,7 +8,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import SessionProvider, { useSession } from '@/context';
+import { StoreProvider } from '@/store/StoreProvider';
+import { useAppSelector } from '@/store/hooks';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -23,28 +24,29 @@ export default function RootLayout() {
   }
 
   return (
-    <SessionProvider>
+    <StoreProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <SafeAreaProvider>
           <RootNavigator />
         </SafeAreaProvider>
         <StatusBar style="auto" />
       </ThemeProvider>
-    </SessionProvider>
+    </StoreProvider>
   );
 }
 
 function RootNavigator() {
-  const { session } = useSession();
+  const user = useAppSelector((state) => state.auth.user);
 
   return (
     <Stack>
-      <Stack.Protected guard={!!session}>
+      <Stack.Protected guard={!!user}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack.Protected>
 
-      <Stack.Protected guard={!session}>
+      <Stack.Protected guard={!user}>
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-up" options={{ headerShown: false }} />
       </Stack.Protected>
 
       <Stack.Screen name="+not-found" options={{ headerShown: false }} />

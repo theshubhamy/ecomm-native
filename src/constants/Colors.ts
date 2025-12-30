@@ -29,7 +29,7 @@ export const Colors = {
     textPrimary: '#ECEDEE',
     textSecondary: '#9BA1A6',
     background: '#151718',
-    backgroundPaper: '#fff',
+    backgroundPaper: '#1F1F1F',
     tint: primaryColor,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
