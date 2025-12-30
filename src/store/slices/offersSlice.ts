@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { supabase } from '@/utils/supabase';
 
 export interface Offer {
@@ -53,10 +53,10 @@ export const fetchOffers = createAsyncThunk(
       return (data || []) as Offer[];
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to fetch offers'
+        error instanceof Error ? error.message : 'Failed to fetch offers',
       );
     }
-  }
+  },
 );
 
 // Validate promo code
@@ -81,16 +81,18 @@ export const validatePromoCode = createAsyncThunk(
       return data as Offer;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to validate promo code'
+        error instanceof Error
+          ? error.message
+          : 'Failed to validate promo code',
       );
     }
-  }
+  },
 );
 
 // Calculate discount amount
 export const calculateDiscount = (
   offer: Offer | null,
-  orderAmount: number
+  orderAmount: number,
 ): number => {
   if (!offer) return 0;
 
@@ -119,18 +121,18 @@ const offersSlice = createSlice({
   name: 'offers',
   initialState,
   reducers: {
-    clearError: (state) => {
+    clearError: state => {
       state.error = null;
     },
-    clearOffers: (state) => {
+    clearOffers: state => {
       state.offers = [];
       state.activeOffers = [];
     },
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     // Fetch offers
     builder
-      .addCase(fetchOffers.pending, (state) => {
+      .addCase(fetchOffers.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -147,7 +149,7 @@ const offersSlice = createSlice({
 
     // Validate promo code
     builder
-      .addCase(validatePromoCode.pending, (state) => {
+      .addCase(validatePromoCode.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -155,7 +157,7 @@ const offersSlice = createSlice({
         state.isLoading = false;
         // Add validated offer to active offers if not already present
         const existingOffer = state.activeOffers.find(
-          (o) => o.id === action.payload.id
+          o => o.id === action.payload.id,
         );
         if (!existingOffer) {
           state.activeOffers.push(action.payload);
@@ -171,4 +173,3 @@ const offersSlice = createSlice({
 
 export const { clearError, clearOffers } = offersSlice.actions;
 export default offersSlice.reducer;
-

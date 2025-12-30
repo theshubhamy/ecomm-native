@@ -1,12 +1,6 @@
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -18,19 +12,23 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchSavedAddresses, setSelectedAddress } from '@/store/slices/locationSlice';
+import { fetchSavedAddresses } from '@/store/slices/locationSlice';
 import { clearCart } from '@/store/slices/cartSlice';
-import { createPaymentIntent, processPayment, PaymentMethod } from '@/store/slices/paymentSlice';
-import { Address } from '@/types';
+import {
+  createPaymentIntent,
+  processPayment,
+  PaymentMethod,
+} from '@/store/slices/paymentSlice';
+import { supabase } from '@/utils/supabase';
 
 export default function Checkout() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
-  const { items, total } = useAppSelector((state) => state.cart);
-  const { user } = useAppSelector((state) => state.auth);
+  const { items, total } = useAppSelector(state => state.cart);
+  const { user } = useAppSelector(state => state.auth);
   const { savedAddresses, selectedAddress } = useAppSelector(
-    (state) => state.location
+    state => state.location,
   );
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod | null>(null);
@@ -42,7 +40,7 @@ export default function Checkout() {
     }
   }, [user, dispatch]);
 
-  const deliveryFee = total >= 10 ? 2.99 : 0;
+  const deliveryFee = total >= 500 ? 50 : 0; // Free delivery above ₹500, else ₹50
   const finalTotal = total + deliveryFee;
 
   const handlePlaceOrder = async () => {
@@ -59,6 +57,10 @@ export default function Checkout() {
     setIsPlacingOrder(true);
 
     try {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       // Generate order number
       const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
 
@@ -66,15 +68,14 @@ export default function Checkout() {
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
-          user_id: user?.id,
+          user_id: user.id,
           order_number: orderNumber,
           status: 'pending',
           total_amount: finalTotal,
           delivery_fee: deliveryFee,
           payment_method: selectedPaymentMethod,
           payment_status: 'pending',
-          delivery_address_id: selectedAddress.id,
-          delivery_time_slot: '', // Get from cart state if needed
+          delivery_address: selectedAddress,
         })
         .select()
         .single();
@@ -84,7 +85,7 @@ export default function Checkout() {
       }
 
       // Create order items
-      const orderItems = items.map((item) => ({
+      const orderItems = items.map(item => ({
         order_id: orderData.id,
         product_id: item.product.id,
         product_name: item.product.name,
@@ -111,8 +112,11 @@ export default function Checkout() {
             amount: finalTotal,
             paymentMethod: selectedPaymentMethod,
             userEmail: user?.email,
-            userName: user?.name || user?.user_metadata?.display_name,
-          })
+            userName:
+              (user as any)?.user_metadata?.display_name ||
+              user?.email?.split('@')[0] ||
+              'Customer',
+          }),
         );
       } else {
         // Online payment - create payment intent and process with Razorpay
@@ -122,9 +126,12 @@ export default function Checkout() {
             amount: finalTotal,
             paymentMethod: selectedPaymentMethod,
             userEmail: user?.email,
-            userName: user?.name || user?.user_metadata?.display_name,
-            userPhone: selectedAddress.contact_phone,
-          })
+            userName:
+              (user as any)?.user_metadata?.display_name ||
+              user?.email?.split('@')[0] ||
+              'Customer',
+            userPhone: selectedAddress.contactPhone,
+          }),
         );
 
         if (createPaymentIntent.fulfilled.match(paymentResult)) {
@@ -140,25 +147,20 @@ export default function Checkout() {
               userName: paymentIntent.user_name,
               userPhone: paymentIntent.user_phone,
               orderDescription: `Order #${orderNumber}`,
-            })
+            }),
           );
 
           if (processPayment.rejected.match(processResult)) {
-            throw new Error(processResult.payload as string || 'Payment failed');
+            throw new Error(
+              (processResult.payload as string) || 'Payment failed',
+            );
           }
         } else {
-          throw new Error(paymentResult.payload as string || 'Payment failed');
+          throw new Error(
+            (paymentResult.payload as string) || 'Payment failed',
+          );
         }
       }
-
-      // Update order status
-      await supabase
-        .from('orders')
-        .update({
-          status: 'confirmed',
-          payment_status: 'paid',
-        })
-        .eq('id', orderData.id);
 
       // Clear cart after successful order
       dispatch(clearCart());
@@ -175,12 +177,12 @@ export default function Checkout() {
             text: 'Continue Shopping',
             onPress: () => router.replace('/(tabs)'),
           },
-        ]
+        ],
       );
     } catch (error) {
       Alert.alert(
         'Order Failed',
-        error instanceof Error ? error.message : 'Failed to place order'
+        error instanceof Error ? error.message : 'Failed to place order',
       );
     } finally {
       setIsPlacingOrder(false);
@@ -245,7 +247,7 @@ export default function Checkout() {
                   {selectedAddress.type.charAt(0).toUpperCase() +
                     selectedAddress.type.slice(1)}
                 </ThemedText>
-                {selectedAddress.is_default && (
+                {selectedAddress.isDefault && (
                   <ThemedView
                     style={[
                       styles.defaultBadge,
@@ -268,8 +270,9 @@ export default function Checkout() {
                   marginTop: 4,
                 }}
               >
-                {selectedAddress.address_line1}
-                {selectedAddress.address_line2 && `, ${selectedAddress.address_line2}`}
+                {selectedAddress.addressLine1}
+                {selectedAddress.addressLine2 &&
+                  `, ${selectedAddress.addressLine2}`}
               </ThemedText>
               <ThemedText
                 type="small"
@@ -281,7 +284,7 @@ export default function Checkout() {
                 {selectedAddress.city}, {selectedAddress.state}{' '}
                 {selectedAddress.pincode}
               </ThemedText>
-              {selectedAddress.contact_phone && (
+              {selectedAddress.contactPhone && (
                 <ThemedText
                   type="small"
                   style={{
@@ -289,7 +292,7 @@ export default function Checkout() {
                     marginTop: 4,
                   }}
                 >
-                  Phone: {selectedAddress.contact_phone}
+                  Phone: {selectedAddress.contactPhone}
                 </ThemedText>
               )}
             </ThemedView>
@@ -327,7 +330,7 @@ export default function Checkout() {
 
           <ThemedView style={styles.paymentMethods}>
             {(['card', 'upi', 'wallet', 'cash'] as PaymentMethod[]).map(
-              (method) => (
+              method => (
                 <ThemedPressable
                   key={method}
                   onPress={() => setSelectedPaymentMethod(method)}
@@ -354,7 +357,7 @@ export default function Checkout() {
                           ? 'paperplane.fill'
                           : method === 'wallet'
                           ? 'square'
-                          : 'cash'
+                          : 'creditcard.fill'
                       }
                       size={24}
                       color={
@@ -384,7 +387,7 @@ export default function Checkout() {
                     />
                   )}
                 </ThemedPressable>
-              )
+              ),
             )}
           </ThemedView>
         </ThemedView>
@@ -411,7 +414,7 @@ export default function Checkout() {
               type="small"
               style={{ color: Colors[colorScheme].textSecondary }}
             >
-              ${total.toFixed(2)}
+              ₹{total.toFixed(0)}
             </ThemedText>
           </ThemedView>
 
@@ -426,14 +429,14 @@ export default function Checkout() {
               type="small"
               style={{ color: Colors[colorScheme].textSecondary }}
             >
-              ${deliveryFee.toFixed(2)}
+              ₹{deliveryFee.toFixed(0)}
             </ThemedText>
           </ThemedView>
 
           <ThemedView style={[styles.summaryRow, styles.totalRow]}>
             <ThemedText type="subtitle">Total</ThemedText>
             <ThemedText type="subtitle" style={{ color: Colors.primary }}>
-              ${finalTotal.toFixed(2)}
+              ₹{finalTotal.toFixed(0)}
             </ThemedText>
           </ThemedView>
         </ThemedView>
@@ -441,7 +444,9 @@ export default function Checkout() {
         {/* Place Order Button */}
         <ThemedButton
           onPress={handlePlaceOrder}
-          disabled={isPlacingOrder || !selectedAddress || !selectedPaymentMethod}
+          disabled={
+            isPlacingOrder || !selectedAddress || !selectedPaymentMethod
+          }
           style={[
             styles.placeOrderButton,
             {
@@ -464,10 +469,7 @@ export default function Checkout() {
               </ThemedText>
             </>
           ) : (
-            <ThemedText
-              type="defaultSemiBold"
-              style={{ color: Colors.black }}
-            >
+            <ThemedText type="defaultSemiBold" style={{ color: Colors.black }}>
               Place Order
             </ThemedText>
           )}
@@ -571,4 +573,3 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
 });
-

@@ -13,9 +13,11 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 const Categories = () => {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
-  const { items: categories, isLoading, error } = useAppSelector(
-    (state) => state.categories
-  );
+  const {
+    items: categories,
+    isLoading,
+    error,
+  } = useAppSelector(state => state.categories);
 
   useEffect(() => {
     // Fetch categories if not already loaded
@@ -27,7 +29,9 @@ const Categories = () => {
   if (isLoading && categories.length === 0) {
     return (
       <ScrollView horizontal>
-        <ThemedView style={styles.loadingContainer}>
+        <ThemedView
+          style={{ backgroundColor: Colors[colorScheme].backgroundPaper }}
+        >
           <ActivityIndicator size="small" color={Colors.primary} />
           <ThemedText type="xsmall" style={{ marginTop: 8 }}>
             Loading categories...
@@ -40,7 +44,9 @@ const Categories = () => {
   if (error && categories.length === 0) {
     return (
       <ScrollView horizontal>
-        <ThemedView style={styles.errorContainer}>
+        <ThemedView
+          style={{ backgroundColor: Colors[colorScheme].backgroundPaper }}
+        >
           <ThemedText type="xsmall" style={{ color: Colors.error }}>
             Failed to load categories
           </ThemedText>
@@ -65,14 +71,19 @@ const Categories = () => {
         >
           {category.image && (
             <Image
-              source={{ uri: typeof category.image === 'string' ? category.image : '' }}
+              source={{
+                uri: typeof category.image === 'string' ? category.image : '',
+              }}
               style={styles.categoryImage}
               contentFit="cover"
               transition={1000}
               alt={category.name}
             />
           )}
-          <ThemedText type="xsmall" style={{ textAlign: 'center', marginTop: 4 }}>
+          <ThemedText
+            type="xsmall"
+            style={{ textAlign: 'center', marginTop: 4 }}
+          >
             {category.name}
           </ThemedText>
         </ThemedView>

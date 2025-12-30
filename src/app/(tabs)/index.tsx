@@ -10,7 +10,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Product } from '@/types';
 import { FlashList } from '@shopify/flash-list';
-import { StyleSheet, ActivityIndicator } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { ProductCardSkeleton } from '@/components/SkeletonLoader';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchProducts } from '@/store/slices/productsSlice';
@@ -98,7 +98,7 @@ export default function HomeScreen() {
           </ThemedView>
           {isLoading ? (
             <ThemedView style={styles.productsGrid}>
-              {[1, 2, 3, 4].map((i) => (
+              {[1, 2, 3, 4].map(i => (
                 <ProductCardSkeleton key={i} />
               ))}
             </ThemedView>

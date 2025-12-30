@@ -1,12 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { StyleSheet, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,9 +13,8 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchProductById, setSelectedProduct } from '@/store/slices/productsSlice';
+import { fetchProductById } from '@/store/slices/productsSlice';
 import { addToCart, addToCartDB } from '@/store/slices/cartSlice';
-import { Product } from '@/types';
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,11 +22,10 @@ export default function ProductDetail() {
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
   const { selectedProduct, isLoading, error } = useAppSelector(
-    (state) => state.products
+    state => state.products,
   );
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector(state => state.auth);
   const [quantity, setQuantity] = useState(1);
-  const [isInWishlist, setIsInWishlist] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -50,23 +42,12 @@ export default function ProductDetail() {
           userId: user.id,
           productId: selectedProduct.id,
           quantity,
-        })
+        }),
       );
     } else {
       dispatch(addToCart({ product: selectedProduct, quantity }));
     }
     Alert.alert('Success', 'Product added to cart!');
-  };
-
-  const handleAddToWishlist = () => {
-    // TODO: Implement wishlist
-    setIsInWishlist(!isInWishlist);
-    Alert.alert(
-      isInWishlist ? 'Removed from Wishlist' : 'Added to Wishlist',
-      isInWishlist
-        ? 'Product removed from your wishlist'
-        : 'Product added to your wishlist'
-    );
   };
 
   const handleQuantityChange = (change: number) => {
@@ -134,13 +115,7 @@ export default function ProductDetail() {
             />
           </ThemedPressable>
           <ThemedText type="subtitle">Product Details</ThemedText>
-          <ThemedPressable onPress={handleAddToWishlist}>
-            <IconSymbol
-              name={isInWishlist ? 'favorite.fill' : 'favorite.fill'}
-              size={24}
-              color={isInWishlist ? Colors.error : Colors[colorScheme].textSecondary}
-            />
-          </ThemedPressable>
+          <ThemedView style={{ width: 24 }} />
         </ThemedView>
       </HeaderView>
 
@@ -201,7 +176,7 @@ export default function ProductDetail() {
             </ThemedView>
             <ThemedText type="subtitle" style={{ color: Colors.primary }}>
               {selectedProduct.price
-                ? `$${selectedProduct.price.toFixed(2)}`
+                ? `₹${selectedProduct.price.toFixed(0)}`
                 : 'Price N/A'}
             </ThemedText>
           </ThemedView>
@@ -232,7 +207,9 @@ export default function ProductDetail() {
               <ThemedText
                 type="xsmall"
                 style={{
-                  color: selectedProduct.inStock ? Colors.success : Colors.error,
+                  color: selectedProduct.inStock
+                    ? Colors.success
+                    : Colors.error,
                   fontWeight: '600',
                 }}
               >
@@ -435,4 +412,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-

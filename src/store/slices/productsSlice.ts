@@ -1,7 +1,11 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Product } from '@/types';
 import { supabase } from '@/utils/supabase';
-import { cacheProducts, getCachedProducts, setLastSyncTime } from '@/utils/cache';
+import {
+  cacheProducts,
+  getCachedProducts,
+  setLastSyncTime,
+} from '@/utils/cache';
 
 interface ProductsState {
   items: Product[];
@@ -99,9 +103,11 @@ export const fetchProducts = createAsyncThunk(
       if (cachedProducts) {
         return cachedProducts as Product[];
       }
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch products');
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to fetch products',
+      );
     }
-  }
+  },
 );
 
 // Fetch products by category
@@ -132,9 +138,11 @@ export const fetchProductsByCategory = createAsyncThunk(
 
       return products;
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch products');
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to fetch products',
+      );
     }
-  }
+  },
 );
 
 // Search products
@@ -165,9 +173,11 @@ export const searchProducts = createAsyncThunk(
 
       return products;
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to search products');
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to search products',
+      );
     }
-  }
+  },
 );
 
 // Fetch single product by ID
@@ -198,9 +208,11 @@ export const fetchProductById = createAsyncThunk(
 
       return product;
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch product');
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to fetch product',
+      );
     }
-  }
+  },
 );
 
 // Store channel reference outside Redux to avoid serialization issues
@@ -225,17 +237,17 @@ export const subscribeToInventoryUpdates = createAsyncThunk(
             schema: 'public',
             table: 'products',
           },
-          (payload) => {
+          payload => {
             if (payload.new) {
               const product = payload.new as any;
               dispatch(
                 updateProductInventory({
                   productId: product.id,
                   inStock: product.in_stock ?? true,
-                })
+                }),
               );
             }
-          }
+          },
         )
         .subscribe();
 
@@ -244,10 +256,12 @@ export const subscribeToInventoryUpdates = createAsyncThunk(
     } catch (error) {
       console.error('Error subscribing to inventory updates:', error);
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to subscribe to inventory updates'
+        error instanceof Error
+          ? error.message
+          : 'Failed to subscribe to inventory updates',
       );
     }
-  }
+  },
 );
 
 // Unsubscribe from inventory updates
@@ -259,7 +273,7 @@ export const unsubscribeFromInventoryUpdates = createAsyncThunk(
       inventoryChannel = null;
     }
     return { unsubscribed: true };
-  }
+  },
 );
 
 const productsSlice = createSlice({
@@ -271,12 +285,12 @@ const productsSlice = createSlice({
     },
     updateProductInventory: (
       state,
-      action: PayloadAction<{ productId: string | number; inStock: boolean }>
+      action: PayloadAction<{ productId: string | number; inStock: boolean }>,
     ) => {
       const { productId, inStock } = action.payload;
 
       // Update in items array
-      const product = state.items.find((p) => p.id === productId);
+      const product = state.items.find(p => p.id === productId);
       if (product) {
         product.inStock = inStock;
       }
@@ -292,17 +306,17 @@ const productsSlice = createSlice({
         lastUpdated: Date.now(),
       };
     },
-    clearError: (state) => {
+    clearError: state => {
       state.error = null;
     },
-    clearProducts: (state) => {
+    clearProducts: state => {
       state.items = [];
     },
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     // Fetch all products
     builder
-      .addCase(fetchProducts.pending, (state) => {
+      .addCase(fetchProducts.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -318,7 +332,7 @@ const productsSlice = createSlice({
 
     // Fetch products by category
     builder
-      .addCase(fetchProductsByCategory.pending, (state) => {
+      .addCase(fetchProductsByCategory.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -334,7 +348,7 @@ const productsSlice = createSlice({
 
     // Search products
     builder
-      .addCase(searchProducts.pending, (state) => {
+      .addCase(searchProducts.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -350,7 +364,7 @@ const productsSlice = createSlice({
 
     // Fetch product by ID
     builder
-      .addCase(fetchProductById.pending, (state) => {
+      .addCase(fetchProductById.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -366,6 +380,10 @@ const productsSlice = createSlice({
   },
 });
 
-export const { setSelectedProduct, updateProductInventory, clearError, clearProducts } = productsSlice.actions;
+export const {
+  setSelectedProduct,
+  updateProductInventory,
+  clearError,
+  clearProducts,
+} = productsSlice.actions;
 export default productsSlice.reducer;
-

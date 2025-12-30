@@ -185,14 +185,6 @@ export default function Profile() {
               onPress={() => router.push('/address-selection')}
               colorScheme={colorScheme}
             />
-
-            <MenuItem
-              icon="favorite.fill"
-              title="Wishlist"
-              subtitle="Your saved items"
-              onPress={() => router.push('/(tabs)/wishlist')}
-              colorScheme={colorScheme}
-            />
           </ThemedView>
         </ThemedView>
 

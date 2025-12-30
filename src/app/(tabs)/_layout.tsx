@@ -65,12 +65,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="wishlist"
-        options={{
-          href: null, // Hide from tab bar but keep accessible via navigation
-        }}
-      />
-      <Tabs.Screen
         name="orders"
         options={{
           href: null, // Hide from tab bar but keep accessible via navigation

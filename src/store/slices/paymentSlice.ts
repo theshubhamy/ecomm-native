@@ -4,7 +4,6 @@ import {
   createRazorpayOrder,
   openRazorpayCheckout,
   verifyRazorpayPayment,
-  RazorpayPaymentResponse,
 } from '@/services/razorpay';
 
 export type PaymentMethod = 'card' | 'cash' | 'upi' | 'wallet';
@@ -54,7 +53,7 @@ export const createPaymentIntent = createAsyncThunk(
       userName?: string;
       userPhone?: string;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       // For cash payments, mark as succeeded immediately
@@ -129,10 +128,12 @@ export const createPaymentIntent = createAsyncThunk(
       };
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to create payment intent'
+        error instanceof Error
+          ? error.message
+          : 'Failed to create payment intent',
       );
     }
-  }
+  },
 );
 
 // Process payment with Razorpay (for online payment methods)
@@ -156,7 +157,7 @@ export const processPayment = createAsyncThunk(
       userPhone?: string;
       orderDescription?: string;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       // Get payment amount from database
@@ -192,7 +193,7 @@ export const processPayment = createAsyncThunk(
       const isVerified = await verifyRazorpayPayment(
         razorpayOrderId,
         paymentResponse.razorpay_payment_id,
-        paymentResponse.razorpay_signature
+        paymentResponse.razorpay_signature,
       );
 
       if (!isVerified) {
@@ -241,17 +242,20 @@ export const processPayment = createAsyncThunk(
         .update({
           status: 'failed',
           payment_gateway_response: {
-            error: error instanceof Error ? error.message : 'Payment processing failed',
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Payment processing failed',
           },
           updated_at: new Date().toISOString(),
         })
         .eq('id', paymentIntentId);
 
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Payment processing failed'
+        error instanceof Error ? error.message : 'Payment processing failed',
       );
     }
-  }
+  },
 );
 
 // Verify payment status
@@ -272,10 +276,10 @@ export const verifyPayment = createAsyncThunk(
       return data as PaymentIntent;
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to verify payment'
+        error instanceof Error ? error.message : 'Failed to verify payment',
       );
     }
-  }
+  },
 );
 
 const paymentSlice = createSlice({
@@ -285,18 +289,18 @@ const paymentSlice = createSlice({
     setPaymentMethod: (state, action: PayloadAction<PaymentMethod>) => {
       // Payment method selection is handled in checkout
     },
-    clearPayment: (state) => {
+    clearPayment: state => {
       state.currentPayment = null;
       state.error = null;
     },
-    clearError: (state) => {
+    clearError: state => {
       state.error = null;
     },
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     // Create payment intent
     builder
-      .addCase(createPaymentIntent.pending, (state) => {
+      .addCase(createPaymentIntent.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -312,7 +316,7 @@ const paymentSlice = createSlice({
 
     // Process payment
     builder
-      .addCase(processPayment.pending, (state) => {
+      .addCase(processPayment.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -330,7 +334,7 @@ const paymentSlice = createSlice({
 
     // Verify payment
     builder
-      .addCase(verifyPayment.pending, (state) => {
+      .addCase(verifyPayment.pending, state => {
         state.isLoading = true;
         state.error = null;
       })
@@ -346,6 +350,6 @@ const paymentSlice = createSlice({
   },
 });
 
-export const { setPaymentMethod, clearPayment, clearError } = paymentSlice.actions;
+export const { setPaymentMethod, clearPayment, clearError } =
+  paymentSlice.actions;
 export default paymentSlice.reducer;
-

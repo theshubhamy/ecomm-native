@@ -3,9 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const CACHE_KEYS = {
   PRODUCTS: 'cached_products',
   CART: 'cached_cart',
-  WISHLIST: 'cached_wishlist',
-  ADDRESSES: 'cached_addresses',
-  ORDERS: 'cached_orders',
   LAST_SYNC: 'last_sync_timestamp',
 } as const;
 
@@ -84,37 +81,8 @@ export const getCachedCart = async () => {
   return getCachedData<any>(CACHE_KEYS.CART);
 };
 
-export const cacheWishlist = async (wishlist: any[]) => {
-  await cacheData(CACHE_KEYS.WISHLIST, wishlist);
-};
-
-export const getCachedWishlist = async () => {
-  return getCachedData<any[]>(CACHE_KEYS.WISHLIST);
-};
-
-export const cacheAddresses = async (addresses: any[]) => {
-  await cacheData(CACHE_KEYS.ADDRESSES, addresses);
-};
-
-export const getCachedAddresses = async () => {
-  return getCachedData<any[]>(CACHE_KEYS.ADDRESSES);
-};
-
-export const cacheOrders = async (orders: any[]) => {
-  await cacheData(CACHE_KEYS.ORDERS, orders);
-};
-
-export const getCachedOrders = async () => {
-  return getCachedData<any[]>(CACHE_KEYS.ORDERS);
-};
-
 export const setLastSyncTime = async (): Promise<void> => {
   await cacheData(CACHE_KEYS.LAST_SYNC, Date.now());
 };
 
-export const getLastSyncTime = async (): Promise<number | null> => {
-  return getCachedData<number>(CACHE_KEYS.LAST_SYNC);
-};
-
 export { CACHE_KEYS };
-

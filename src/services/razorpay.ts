@@ -98,7 +98,7 @@ export async function openRazorpayCheckout(
     try {
       // Build Razorpay Checkout URL with callback
       const callbackUrl = `${
-        process.env.EXPO_PUBLIC_APP_SCHEME || 'ecommnative'
+        process.env.EXPO_PUBLIC_APP_SCHEME || 'quickshop'
       }://payment-callback`;
 
       const params = new URLSearchParams({

@@ -1,9 +1,13 @@
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { getCurrentLocation, reverseGeocode, fetchSavedAddresses } from '@/store/slices/locationSlice';
+import {
+  getCurrentLocation,
+  reverseGeocode,
+  fetchSavedAddresses,
+} from '@/store/slices/locationSlice';
 import { router } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { ThemedPressable } from './ThemedPressable';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
@@ -12,24 +16,12 @@ import { IconSymbol } from './ui/IconSymbol';
 const Location = () => {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
-  const { selectedAddress, isLoading, savedAddresses } = useAppSelector(
-    (state) => state.location
+  const { selectedAddress, savedAddresses } = useAppSelector(
+    state => state.location,
   );
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector(state => state.auth);
 
-  useEffect(() => {
-    // Fetch saved addresses if user is logged in
-    if (user?.id) {
-      dispatch(fetchSavedAddresses(user.id));
-    }
-  }, [user, dispatch]);
-
-  const handleLocationPress = () => {
-    // Navigate to address selection screen
-    router.push('/address-selection');
-  };
-
-  const handleGetCurrentLocation = async () => {
+  const handleGetCurrentLocation = useCallback(async () => {
     try {
       const locationResult = await dispatch(getCurrentLocation());
       if (getCurrentLocation.fulfilled.match(locationResult)) {
@@ -38,13 +30,27 @@ const Location = () => {
     } catch (error) {
       console.error('Failed to get location:', error);
     }
+  }, [dispatch]);
+
+  useEffect(() => {
+    // Fetch current location on component mount
+    handleGetCurrentLocation();
+    // Fetch saved addresses if user is logged in
+    if (user?.id) {
+      dispatch(fetchSavedAddresses(user.id));
+    }
+  }, [user?.id, dispatch, handleGetCurrentLocation]);
+
+  const handleLocationPress = () => {
+    // Navigate to address selection screen
+    router.push('/address-selection');
   };
 
   const displayAddress = selectedAddress
     ? `${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.pincode}`
     : savedAddresses.length > 0
-      ? `${savedAddresses[0].city}, ${savedAddresses[0].state} ${savedAddresses[0].pincode}`
-      : 'Select delivery address';
+    ? `${savedAddresses[0].city}, ${savedAddresses[0].state} ${savedAddresses[0].pincode}`
+    : 'Select delivery address';
 
   return (
     <ThemedPressable
@@ -58,11 +64,7 @@ const Location = () => {
         flex: 1,
       }}
     >
-      <IconSymbol
-        name="location.fill"
-        size={16}
-        color={Colors.primary}
-      />
+      <IconSymbol name="location.fill" size={16} color={Colors.primary} />
       <ThemedView style={{ flex: 1 }}>
         <ThemedText
           type="xsmall"

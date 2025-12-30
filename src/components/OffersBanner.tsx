@@ -70,7 +70,7 @@ export default function OffersBanner({ onOfferPress }: OffersBannerProps) {
                   >
                     {offer.discount_type === 'percentage'
                       ? `${offer.discount_value}% OFF`
-                      : `$${offer.discount_value} OFF`}
+                      : `₹${offer.discount_value} OFF`}
                   </ThemedText>
                 </ThemedView>
                 {offer.promo_code && (

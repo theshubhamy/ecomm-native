@@ -1,11 +1,10 @@
 {
-  "name": "ecomm-native",
+  "name": "quickshop",
   "main": "expo-router/entry",
   "version": "1.0.0",
-  "description": "A React Native e-commerce application built with Expo and React Navigation.",
+  "description": "QuickShop - A quick commerce mobile application built with React Native and Expo.",
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",

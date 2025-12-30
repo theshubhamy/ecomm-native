@@ -171,11 +171,6 @@ export const cancelOrder = createAsyncThunk(
   ) => {
     try {
       // Get order details first
-      const { data: orderData } = await supabase
-        .from('orders')
-        .select('order_number')
-        .eq('id', orderId)
-        .single();
 
       const { data, error } = await supabase
         .from('orders')

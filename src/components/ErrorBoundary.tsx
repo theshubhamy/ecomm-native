@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { ThemedButton } from './ThemedButton';
@@ -56,7 +56,9 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      return <ErrorFallback error={this.state.error} onReset={this.handleReset} />;
+      return (
+        <ErrorFallback error={this.state.error} onReset={this.handleReset} />
+      );
     }
 
     return this.props.children;
@@ -85,7 +87,11 @@ function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
             { backgroundColor: Colors.error + '20' },
           ]}
         >
-          <IconSymbol name="chevron.left.forwardslash.chevron.right" size={48} color={Colors.error} />
+          <IconSymbol
+            name="chevron.left.forwardslash.chevron.right"
+            size={48}
+            color={Colors.error}
+          />
         </ThemedView>
 
         <ThemedText type="subtitle" style={styles.title}>
@@ -94,12 +100,9 @@ function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
 
         <ThemedText
           type="small"
-          style={[
-            styles.message,
-            { color: Colors[colorScheme].textSecondary },
-          ]}
+          style={[styles.message, { color: Colors[colorScheme].textSecondary }]}
         >
-          We're sorry, but something unexpected happened. Please try again.
+          We are sorry, but something unexpected happened. Please try again.
         </ThemedText>
 
         {error && __DEV__ && (
@@ -122,10 +125,7 @@ function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
           onPress={onReset}
           style={[styles.resetButton, { backgroundColor: Colors.primary }]}
         >
-          <ThemedText
-            type="defaultSemiBold"
-            style={{ color: Colors.black }}
-          >
+          <ThemedText type="defaultSemiBold" style={{ color: Colors.black }}>
             Try Again
           </ThemedText>
         </ThemedButton>
@@ -177,4 +177,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-

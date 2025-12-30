@@ -9,27 +9,32 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
-  removeFromCart,
   updateQuantity,
   fetchCart,
-  removeFromCartDB,
   updateQuantityDB,
 } from '@/store/slices/cartSlice';
-import { validatePromoCode, calculateDiscount } from '@/store/slices/offersSlice';
+import {
+  validatePromoCode,
+  calculateDiscount,
+} from '@/store/slices/offersSlice';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { StyleSheet, ActivityIndicator, Alert, TextInput } from 'react-native';
+import { StyleSheet, Alert, TextInput } from 'react-native';
 import { CartItemSkeleton } from '@/components/SkeletonLoader';
 import { router } from 'expo-router';
 
-const MINIMUM_ORDER_AMOUNT = 10.0; // Minimum order amount in dollars
+const MINIMUM_ORDER_AMOUNT = 500; // Minimum order amount in INR
+const FREE_DELIVERY_THRESHOLD = 1000; // Free delivery for orders above ₹1000
+const BASE_DELIVERY_FEE = 50; // Base delivery fee in INR
+const BASE_DELIVERY_DISTANCE_KM = 5; // Base delivery distance in km
+const DELIVERY_FEE_PER_KM = 10; // Additional fee per km beyond base distance
 
 // Calculate distance between two coordinates using Haversine formula
 const calculateDistance = (
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number => {
   const R = 6371; // Radius of the Earth in kilometers
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -45,35 +50,6 @@ const calculateDistance = (
   return distance;
 };
 
-// Generate time slots for today and tomorrow
-const generateTimeSlots = () => {
-  const slots = [];
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const dates = [
-    { date: today, label: 'Today' },
-    { date: tomorrow, label: 'Tomorrow' },
-  ];
-
-  dates.forEach(({ date, label }) => {
-    const hours = [10, 12, 14, 16, 18, 20];
-    hours.forEach((hour) => {
-      const slotDate = new Date(date);
-      slotDate.setHours(hour, 0, 0, 0);
-      slots.push({
-        id: `${date.toDateString()}-${hour}`,
-        label: `${label}, ${hour}:00 - ${hour + 2}:00`,
-        date: slotDate,
-        available: true,
-      });
-    });
-  });
-
-  return slots;
-};
-
 export default function Cart() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
@@ -81,13 +57,9 @@ export default function Cart() {
     state => state.cart,
   );
   const { user } = useAppSelector(state => state.auth);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
-  const [showTimeSlots, setShowTimeSlots] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [appliedOffer, setAppliedOffer] = useState<any>(null);
   const [showPromoInput, setShowPromoInput] = useState(false);
-  const timeSlots = generateTimeSlots();
-  const { activeOffers } = useAppSelector((state) => state.offers);
 
   useEffect(() => {
     // Fetch cart from DB if user is authenticated
@@ -97,7 +69,7 @@ export default function Cart() {
   }, [user, dispatch]);
 
   const { selectedAddress, currentLocation } = useAppSelector(
-    (state) => state.location
+    state => state.location,
   );
 
   // Calculate delivery fee based on distance
@@ -108,17 +80,25 @@ export default function Cart() {
     }
 
     // If no address selected, return base fee
-    if (!selectedAddress || (!selectedAddress.latitude || !selectedAddress.longitude)) {
+    if (
+      !selectedAddress ||
+      !selectedAddress.latitude ||
+      !selectedAddress.longitude
+    ) {
       return isMinimumOrderMet ? BASE_DELIVERY_FEE : 0;
     }
 
     // Calculate distance if we have current location
-    if (currentLocation && currentLocation.latitude && currentLocation.longitude) {
+    if (
+      currentLocation &&
+      currentLocation.latitude &&
+      currentLocation.longitude
+    ) {
       const distance = calculateDistance(
         currentLocation.latitude,
         currentLocation.longitude,
         selectedAddress.latitude!,
-        selectedAddress.longitude!
+        selectedAddress.longitude!,
       );
 
       if (distance <= BASE_DELIVERY_DISTANCE_KM) {
@@ -142,7 +122,8 @@ export default function Cart() {
     : 0;
   const subtotalAfterDiscount = total - discountAmount;
   const deliveryFee = calculateDeliveryFee();
-  const finalTotal = subtotalAfterDiscount + deliveryFee;
+  const handlingCharge = 2; // Fixed handling charge
+  const finalTotal = subtotalAfterDiscount + deliveryFee + handlingCharge;
 
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) return;
@@ -154,9 +135,12 @@ export default function Cart() {
         setShowPromoInput(false);
         Alert.alert('Success', 'Promo code applied successfully!');
       } else {
-        Alert.alert('Error', result.payload as string || 'Invalid promo code');
+        Alert.alert(
+          'Error',
+          (result.payload as string) || 'Invalid promo code',
+        );
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to validate promo code');
     }
   };
@@ -164,14 +148,6 @@ export default function Cart() {
   const handleRemovePromoCode = () => {
     setAppliedOffer(null);
     setPromoCode('');
-  };
-
-  const handleRemoveItem = (productId: string | number) => {
-    if (user?.id) {
-      dispatch(removeFromCartDB({ userId: user.id, productId }));
-    } else {
-      dispatch(removeFromCart(productId));
-    }
   };
 
   const handleUpdateQuantity = (
@@ -193,21 +169,70 @@ export default function Cart() {
     >
       <HeaderView>
         <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Cart</ThemedText>
+          <ThemedText type="subtitle">Checkout</ThemedText>
           <ThemedPressable style={styles.dotsButton}>
             <IconSymbol
-              name="ellipsis.fill"
+              name="paperplane.fill"
               size={20}
               color={Colors[colorScheme].icon}
             />
+            <ThemedText
+              type="xsmall"
+              style={{
+                color: Colors[colorScheme].textSecondary,
+                marginLeft: 4,
+              }}
+            >
+              Share
+            </ThemedText>
           </ThemedPressable>
         </ThemedView>
       </HeaderView>
 
       <ScrollView>
+        {/* Delivery Info Banner */}
+        {items.length > 0 && (
+          <ThemedView
+            style={[
+              styles.deliveryBanner,
+              { backgroundColor: Colors.success + '15' },
+            ]}
+          >
+            <ThemedText
+              type="xsmall"
+              style={{
+                color: Colors.success,
+                fontWeight: '700',
+                marginRight: 6,
+              }}
+            >
+              ⏱️
+            </ThemedText>
+            <ThemedText
+              type="small"
+              style={{
+                color: Colors.success,
+                marginLeft: 6,
+                fontWeight: '600',
+              }}
+            >
+              Delivery in 15-30 minutes
+            </ThemedText>
+          </ThemedView>
+        )}
+        {items.length > 0 && (
+          <ThemedView style={styles.shipmentInfo}>
+            <ThemedText
+              type="small"
+              style={{ color: Colors[colorScheme].textSecondary }}
+            >
+              Shipment of {items.length} {items.length === 1 ? 'item' : 'items'}
+            </ThemedText>
+          </ThemedView>
+        )}
         {isLoading ? (
           <ThemedView style={styles.cartItemsContainer}>
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3].map(i => (
               <CartItemSkeleton key={i} />
             ))}
           </ThemedView>
@@ -235,98 +260,123 @@ export default function Cart() {
         ) : (
           <>
             <ThemedView style={styles.cartItemsContainer}>
-              {items.map(item => (
-                <ThemedView
-                  key={item.product.id}
-                  style={[
-                    styles.cartItem,
-                    { backgroundColor: Colors[colorScheme].backgroundPaper },
-                  ]}
-                >
-                  <Image
-                    source={
-                      item.product.imageUrl
-                        ? { uri: item.product.imageUrl }
-                        : require('../../assets/images/icon.png')
-                    }
-                    style={styles.cartItemImage}
-                    contentFit="cover"
-                  />
-                  <ThemedView style={styles.cartItemDetails}>
-                    <ThemedText type="defaultSemiBold" numberOfLines={2}>
-                      {item.product.name}
-                    </ThemedText>
-                    <ThemedText
-                      type="small"
-                      style={{ color: Colors[colorScheme].textSecondary }}
-                    >
-                      ${item.product.price?.toFixed(2) || '0.00'}
-                    </ThemedText>
-                    <ThemedView style={styles.quantityContainer}>
-                      <ThemedButton
-                        onPress={() =>
-                          handleUpdateQuantity(
-                            item.product.id,
-                            item.quantity - 1,
-                          )
-                        }
-                        style={styles.quantityButton}
-                        accessible={true}
-                        accessibilityLabel={`Decrease quantity of ${item.product.name}`}
-                        accessibilityRole="button"
-                      >
-                        <IconSymbol
-                          name="minus"
-                          size={16}
-                          color={Colors[colorScheme].textPrimary}
-                        />
-                      </ThemedButton>
+              {items.map(item => {
+                const itemPrice = item.product.price || 0;
+                const originalPrice =
+                  (item.product as any).originalPrice || itemPrice;
+                const hasDiscount = originalPrice > itemPrice;
+                const itemTotal = itemPrice * item.quantity;
+                const originalTotal = originalPrice * item.quantity;
+
+                return (
+                  <ThemedView
+                    key={item.product.id}
+                    style={[
+                      styles.cartItem,
+                      { backgroundColor: Colors[colorScheme].backgroundPaper },
+                    ]}
+                  >
+                    <Image
+                      source={
+                        item.product.imageUrl
+                          ? { uri: item.product.imageUrl }
+                          : require('../../assets/images/icon.png')
+                      }
+                      style={styles.cartItemImage}
+                      contentFit="cover"
+                    />
+                    <ThemedView style={styles.cartItemDetails}>
                       <ThemedText
-                        type="defaultSemiBold"
-                        style={styles.quantityText}
-                        accessible={true}
-                        accessibilityRole="text"
-                        accessibilityLabel={`Quantity: ${item.quantity}`}
+                        type="small"
+                        numberOfLines={2}
+                        style={styles.cartItemName}
                       >
-                        {item.quantity}
+                        {item.product.name}
                       </ThemedText>
-                      <ThemedButton
-                        onPress={() =>
-                          handleUpdateQuantity(
-                            item.product.id,
-                            item.quantity + 1,
-                          )
-                        }
-                        style={styles.quantityButton}
-                        accessible={true}
-                        accessibilityLabel={`Increase quantity of ${item.product.name}`}
-                        accessibilityRole="button"
-                      >
-                        <IconSymbol
-                          name="plus"
-                          size={16}
-                          color={Colors[colorScheme].textPrimary}
-                        />
-                      </ThemedButton>
+                      {(item.product as any).weight && (
+                        <ThemedText
+                          type="xsmall"
+                          style={{
+                            color: Colors[colorScheme].textSecondary,
+                            marginTop: 2,
+                          }}
+                        >
+                          {(item.product as any).weight}
+                        </ThemedText>
+                      )}
+                      <ThemedView style={styles.quantityContainer}>
+                        <ThemedButton
+                          onPress={() =>
+                            handleUpdateQuantity(
+                              item.product.id,
+                              item.quantity - 1,
+                            )
+                          }
+                          style={[
+                            styles.quantityButton,
+                            { backgroundColor: Colors.primary },
+                          ]}
+                          accessible={true}
+                          accessibilityLabel={`Decrease quantity of ${item.product.name}`}
+                          accessibilityRole="button"
+                        >
+                          <IconSymbol
+                            name="minus"
+                            size={12}
+                            color={Colors.black}
+                          />
+                        </ThemedButton>
+                        <ThemedText
+                          type="small"
+                          style={styles.quantityText}
+                          accessible={true}
+                          accessibilityRole="text"
+                          accessibilityLabel={`Quantity: ${item.quantity}`}
+                        >
+                          {item.quantity}
+                        </ThemedText>
+                        <ThemedButton
+                          onPress={() =>
+                            handleUpdateQuantity(
+                              item.product.id,
+                              item.quantity + 1,
+                            )
+                          }
+                          style={[
+                            styles.quantityButton,
+                            { backgroundColor: Colors.primary },
+                          ]}
+                          accessible={true}
+                          accessibilityLabel={`Increase quantity of ${item.product.name}`}
+                          accessibilityRole="button"
+                        >
+                          <IconSymbol
+                            name="plus"
+                            size={12}
+                            color={Colors.black}
+                          />
+                        </ThemedButton>
+                      </ThemedView>
+                    </ThemedView>
+                    <ThemedView style={styles.cartItemActions}>
+                      {hasDiscount && (
+                        <ThemedText
+                          type="xsmall"
+                          style={[
+                            styles.originalPrice,
+                            { color: Colors[colorScheme].textSecondary },
+                          ]}
+                        >
+                          ₹{originalTotal.toFixed(0)}
+                        </ThemedText>
+                      )}
+                      <ThemedText type="small" style={styles.itemTotal}>
+                        ₹{itemTotal.toFixed(0)}
+                      </ThemedText>
                     </ThemedView>
                   </ThemedView>
-                  <ThemedView style={styles.cartItemActions}>
-                    <ThemedText type="defaultSemiBold" style={styles.itemTotal}>
-                      ${((item.product.price || 0) * item.quantity).toFixed(2)}
-                    </ThemedText>
-                    <ThemedButton
-                      onPress={() => handleRemoveItem(item.product.id)}
-                      style={styles.removeButton}
-                    >
-                      <IconSymbol
-                        name="trash.fill"
-                        size={20}
-                        color={Colors.error}
-                      />
-                    </ThemedButton>
-                  </ThemedView>
-                </ThemedView>
-              ))}
+                );
+              })}
             </ThemedView>
             <ThemedView
               style={[
@@ -351,139 +401,51 @@ export default function Cart() {
                     type="small"
                     style={{ color: Colors.warning, marginLeft: 8, flex: 1 }}
                   >
-                    Add ${minimumOrderShortfall.toFixed(2)} more to place order
-                    (Minimum: ${MINIMUM_ORDER_AMOUNT.toFixed(2)})
+                    Add ₹{minimumOrderShortfall.toFixed(0)} more to place order
+                    (Minimum: ₹{MINIMUM_ORDER_AMOUNT.toFixed(0)})
                   </ThemedText>
                 </ThemedView>
               )}
 
-              {/* Delivery Time Slot Selection */}
-              <ThemedView style={styles.deliverySection}>
-                <ThemedView style={styles.sectionHeader}>
-                  <ThemedText type="defaultSemiBold">Delivery Time</ThemedText>
-                  <ThemedPressable
-                    onPress={() => setShowTimeSlots(!showTimeSlots)}
-                    style={styles.toggleButton}
-                  >
-                    <ThemedText
-                      type="small"
-                      style={{ color: Colors.primary, marginRight: 4 }}
+              {/* Use Coupons Section */}
+              <ThemedPressable
+                style={[
+                  styles.sectionCard,
+                  { backgroundColor: Colors[colorScheme].backgroundPaper },
+                ]}
+                onPress={() => setShowPromoInput(!showPromoInput)}
+              >
+                <ThemedView style={styles.sectionCardContent}>
+                  <ThemedView style={styles.sectionCardLeft}>
+                    <ThemedView
+                      style={[
+                        styles.sectionIcon,
+                        { backgroundColor: Colors.primary + '15' },
+                      ]}
                     >
-                      {selectedTimeSlot
-                        ? timeSlots.find((s) => s.id === selectedTimeSlot)?.label
-                        : 'Select Time'}
-                    </ThemedText>
-                    <IconSymbol
-                      name={showTimeSlots ? 'chevron.down' : 'chevron.down'}
-                      size={16}
-                      color={Colors.primary}
-                    />
-                  </ThemedPressable>
-                </ThemedView>
-
-                {showTimeSlots && (
-                  <ThemedView
-                    style={[
-                      styles.timeSlotsContainer,
-                      { backgroundColor: Colors[colorScheme].background },
-                    ]}
-                  >
-                    {timeSlots.map((slot) => (
-                      <ThemedPressable
-                        key={slot.id}
-                        onPress={() => {
-                          setSelectedTimeSlot(slot.id);
-                          setShowTimeSlots(false);
-                        }}
-                        style={[
-                          styles.timeSlotItem,
-                          {
-                            backgroundColor:
-                              selectedTimeSlot === slot.id
-                                ? Colors.primary + '20'
-                                : Colors[colorScheme].backgroundPaper,
-                            borderColor:
-                              selectedTimeSlot === slot.id
-                                ? Colors.primary
-                                : Colors[colorScheme].textSecondary + '30',
-                          },
-                        ]}
-                      >
-                        <ThemedText
-                          type="small"
-                          style={{
-                            color:
-                              selectedTimeSlot === slot.id
-                                ? Colors.primary
-                                : Colors[colorScheme].textPrimary,
-                            fontWeight:
-                              selectedTimeSlot === slot.id ? '600' : '400',
-                          }}
-                        >
-                          {slot.label}
-                        </ThemedText>
-                        {selectedTimeSlot === slot.id && (
-                          <IconSymbol
-                            name="checkmark.square.fill"
-                            size={20}
-                            color={Colors.primary}
-                          />
-                        )}
-                      </ThemedPressable>
-                    ))}
-                  </ThemedView>
-                )}
-              </ThemedView>
-
-              {/* Promo Code Section */}
-              <ThemedView style={styles.promoSection}>
-                {!appliedOffer ? (
-                  <ThemedPressable
-                    onPress={() => setShowPromoInput(!showPromoInput)}
-                    style={styles.promoButton}
-                  >
-                    <IconSymbol
-                      name="paperplane.fill"
-                      size={16}
-                      color={Colors.primary}
-                    />
-                    <ThemedText
-                      type="small"
-                      style={{ color: Colors.primary, marginLeft: 8 }}
-                    >
-                      {showPromoInput ? 'Hide' : 'Apply Promo Code'}
-                    </ThemedText>
-                  </ThemedPressable>
-                ) : (
-                  <ThemedView style={styles.appliedPromo}>
-                    <ThemedView style={styles.appliedPromoInfo}>
                       <IconSymbol
-                        name="checkmark.square.fill"
-                        size={16}
-                        color={Colors.success}
+                        name="tag.fill"
+                        size={18}
+                        color={Colors.primary}
                       />
-                      <ThemedText
-                        type="small"
-                        style={{ color: Colors.success, marginLeft: 8 }}
-                      >
-                        {appliedOffer.promo_code} Applied
-                      </ThemedText>
                     </ThemedView>
-                    <ThemedPressable
-                      onPress={handleRemovePromoCode}
-                      style={styles.removePromoButton}
-                    >
-                      <ThemedText
-                        type="xsmall"
-                        style={{ color: Colors.error }}
-                      >
-                        Remove
-                      </ThemedText>
-                    </ThemedPressable>
+                    <ThemedText type="defaultSemiBold">Use Coupons</ThemedText>
                   </ThemedView>
-                )}
+                  <IconSymbol
+                    name="chevron.right"
+                    size={18}
+                    color={Colors[colorScheme].textSecondary}
+                  />
+                </ThemedView>
+              </ThemedPressable>
 
-                {showPromoInput && !appliedOffer && (
+              {showPromoInput && !appliedOffer && (
+                <ThemedView
+                  style={[
+                    styles.promoInputCard,
+                    { backgroundColor: Colors[colorScheme].backgroundPaper },
+                  ]}
+                >
                   <ThemedView style={styles.promoInputContainer}>
                     <TextInput
                       style={[
@@ -515,82 +477,241 @@ export default function Cart() {
                       </ThemedText>
                     </ThemedButton>
                   </ThemedView>
-                )}
-              </ThemedView>
-
-              {/* Order Summary */}
-              <ThemedView style={styles.summaryRow}>
-                <ThemedText type="subtitle">Subtotal</ThemedText>
-                <ThemedText type="subtitle">${total.toFixed(2)}</ThemedText>
-              </ThemedView>
-              {discountAmount > 0 && (
-                <ThemedView style={styles.summaryRow}>
-                  <ThemedText
-                    type="small"
-                    style={{ color: Colors.success }}
-                  >
-                    Discount ({appliedOffer?.promo_code})
-                  </ThemedText>
-                  <ThemedText
-                    type="small"
-                    style={{ color: Colors.success }}
-                  >
-                    -${discountAmount.toFixed(2)}
-                  </ThemedText>
                 </ThemedView>
               )}
-              <ThemedView style={styles.summaryRow}>
-                <ThemedView style={{ flexDirection: 'row', alignItems: 'center' }}>
+
+              {appliedOffer && (
+                <ThemedView
+                  style={[
+                    styles.appliedPromoCard,
+                    { backgroundColor: Colors.success + '15' },
+                  ]}
+                >
+                  <ThemedView style={styles.appliedPromoInfo}>
+                    <IconSymbol
+                      name="checkmark.square.fill"
+                      size={18}
+                      color={Colors.success}
+                    />
+                    <ThemedText
+                      type="small"
+                      style={{
+                        color: Colors.success,
+                        marginLeft: 8,
+                        fontWeight: '600',
+                      }}
+                    >
+                      {appliedOffer.promo_code} Applied
+                    </ThemedText>
+                  </ThemedView>
+                  <ThemedPressable
+                    onPress={handleRemovePromoCode}
+                    style={styles.removePromoButton}
+                  >
+                    <ThemedText type="xsmall" style={{ color: Colors.error }}>
+                      Remove
+                    </ThemedText>
+                  </ThemedPressable>
+                </ThemedView>
+              )}
+
+              {/* Bill Details Section */}
+              <ThemedView
+                style={[
+                  styles.billDetailsCard,
+                  { backgroundColor: Colors[colorScheme].backgroundPaper },
+                ]}
+              >
+                <ThemedText
+                  type="defaultSemiBold"
+                  style={styles.billDetailsTitle}
+                >
+                  Bill details
+                </ThemedText>
+
+                <ThemedView style={styles.billDetailRow}>
+                  <ThemedView style={styles.billDetailLeft}>
+                    <ThemedText
+                      type="small"
+                      style={{ color: Colors[colorScheme].textSecondary }}
+                    >
+                      Items total
+                    </ThemedText>
+                    {discountAmount > 0 && (
+                      <ThemedText
+                        type="xsmall"
+                        style={{ color: Colors.success, marginLeft: 8 }}
+                      >
+                        Saved ₹{discountAmount.toFixed(0)}
+                      </ThemedText>
+                    )}
+                  </ThemedView>
+                  <ThemedView style={styles.billDetailRight}>
+                    {discountAmount > 0 && (
+                      <ThemedText
+                        type="xsmall"
+                        style={[
+                          styles.strikethroughPrice,
+                          { color: Colors[colorScheme].textSecondary },
+                        ]}
+                      >
+                        ₹{total.toFixed(0)}
+                      </ThemedText>
+                    )}
+                    <ThemedText
+                      type="small"
+                      style={{ color: Colors[colorScheme].textPrimary }}
+                    >
+                      ₹{subtotalAfterDiscount.toFixed(0)}
+                    </ThemedText>
+                  </ThemedView>
+                </ThemedView>
+
+                <ThemedView style={styles.billDetailRow}>
                   <ThemedText
                     type="small"
                     style={{ color: Colors[colorScheme].textSecondary }}
                   >
-                    Delivery Fee
+                    Delivery charge
                   </ThemedText>
-                  {total >= FREE_DELIVERY_THRESHOLD && (
-                    <ThemedView
-                      style={[
-                        styles.freeDeliveryBadge,
-                        { backgroundColor: Colors.success + '20' },
-                      ]}
-                    >
+                  <ThemedView style={styles.billDetailRight}>
+                    {deliveryFee === 0 ? (
+                      <>
+                        <ThemedText
+                          type="xsmall"
+                          style={[
+                            styles.strikethroughPrice,
+                            { color: Colors[colorScheme].textSecondary },
+                          ]}
+                        >
+                          ₹{BASE_DELIVERY_FEE}
+                        </ThemedText>
+                        <ThemedText
+                          type="small"
+                          style={{ color: Colors.success, fontWeight: '600' }}
+                        >
+                          FREE
+                        </ThemedText>
+                      </>
+                    ) : (
                       <ThemedText
-                        type="xsmall"
+                        type="small"
+                        style={{ color: Colors[colorScheme].textPrimary }}
+                      >
+                        ₹{deliveryFee.toFixed(0)}
+                      </ThemedText>
+                    )}
+                  </ThemedView>
+                </ThemedView>
+
+                <ThemedView style={styles.billDetailRow}>
+                  <ThemedText
+                    type="small"
+                    style={{ color: Colors[colorScheme].textSecondary }}
+                  >
+                    Handling charge
+                  </ThemedText>
+                  <ThemedText
+                    type="small"
+                    style={{ color: Colors[colorScheme].textPrimary }}
+                  >
+                    ₹2
+                  </ThemedText>
+                </ThemedView>
+
+                <ThemedView
+                  style={[styles.billDetailRow, styles.grandTotalRow]}
+                >
+                  <ThemedText type="defaultSemiBold">Grand total</ThemedText>
+                  <ThemedText
+                    type="defaultSemiBold"
+                    style={{ color: Colors.primary }}
+                  >
+                    ₹{(finalTotal + 2).toFixed(0)}
+                  </ThemedText>
+                </ThemedView>
+
+                {discountAmount > 0 && (
+                  <ThemedView style={styles.savingsRow}>
+                    <ThemedView style={styles.savingsDivider} />
+                    <ThemedView style={styles.savingsContent}>
+                      <ThemedText
+                        type="small"
                         style={{ color: Colors.success, fontWeight: '600' }}
                       >
-                        FREE
+                        Your total savings
+                      </ThemedText>
+                      <ThemedText
+                        type="small"
+                        style={{ color: Colors.success, fontWeight: '600' }}
+                      >
+                        ₹{discountAmount.toFixed(0)}
                       </ThemedText>
                     </ThemedView>
-                  )}
-                </ThemedView>
-                <ThemedText
-                  type="small"
-                  style={{
-                    color:
-                      deliveryFee === 0
-                        ? Colors.success
-                        : Colors[colorScheme].textSecondary,
-                    textDecorationLine: deliveryFee === 0 ? 'line-through' : 'none',
-                  }}
-                >
-                  {deliveryFee === 0 ? (
-                    <ThemedText
-                      type="small"
-                      style={{ color: Colors.success, textDecorationLine: 'none' }}
+                  </ThemedView>
+                )}
+              </ThemedView>
+
+              {/* Add GSTIN Section */}
+              <ThemedPressable
+                style={[
+                  styles.sectionCard,
+                  { backgroundColor: Colors[colorScheme].backgroundPaper },
+                ]}
+              >
+                <ThemedView style={styles.sectionCardContent}>
+                  <ThemedView style={styles.sectionCardLeft}>
+                    <ThemedView
+                      style={[
+                        styles.sectionIcon,
+                        { backgroundColor: Colors.primary + '15' },
+                      ]}
                     >
-                      FREE
-                    </ThemedText>
-                  ) : (
-                    `$${deliveryFee.toFixed(2)}`
-                  )}
-                </ThemedText>
-              </ThemedView>
-              <ThemedView style={[styles.summaryRow, styles.totalRow]}>
-                <ThemedText type="subtitle">Total</ThemedText>
-                <ThemedText type="subtitle" style={{ color: Colors.primary }}>
-                  ${finalTotal.toFixed(2)}
-                </ThemedText>
-              </ThemedView>
+                      <IconSymbol
+                        name="tag.fill"
+                        size={18}
+                        color={Colors.primary}
+                      />
+                    </ThemedView>
+                    <ThemedView style={styles.sectionCardText}>
+                      <ThemedText type="defaultSemiBold">Add GSTIN</ThemedText>
+                      <ThemedText
+                        type="xsmall"
+                        style={{
+                          color: Colors[colorScheme].textSecondary,
+                          marginTop: 2,
+                        }}
+                      >
+                        Claim GST input credit up to 18% on your order
+                      </ThemedText>
+                    </ThemedView>
+                  </ThemedView>
+                  <IconSymbol
+                    name="chevron.right"
+                    size={18}
+                    color={Colors[colorScheme].textSecondary}
+                  />
+                </ThemedView>
+              </ThemedPressable>
+
+              {/* Cancellation Policy Section */}
+              <ThemedPressable
+                style={[
+                  styles.sectionCard,
+                  { backgroundColor: Colors[colorScheme].backgroundPaper },
+                ]}
+              >
+                <ThemedView style={styles.sectionCardContent}>
+                  <ThemedText type="defaultSemiBold">
+                    Cancellation Policy
+                  </ThemedText>
+                  <IconSymbol
+                    name="chevron.right"
+                    size={18}
+                    color={Colors[colorScheme].textSecondary}
+                  />
+                </ThemedView>
+              </ThemedPressable>
 
               {/* Checkout Button */}
               <ThemedButton
@@ -598,25 +719,17 @@ export default function Cart() {
                   styles.checkoutButton,
                   {
                     backgroundColor: Colors.primary,
-                    opacity:
-                      isMinimumOrderMet && selectedTimeSlot ? 1 : 0.5,
+                    opacity: isMinimumOrderMet ? 1 : 0.5,
                   },
                 ]}
-                disabled={!isMinimumOrderMet || !selectedTimeSlot}
+                disabled={!isMinimumOrderMet}
                 onPress={() => {
                   if (!isMinimumOrderMet) {
                     Alert.alert(
                       'Minimum Order Required',
-                      `Please add $${minimumOrderShortfall.toFixed(
-                        2
-                      )} more to place your order.`
-                    );
-                    return;
-                  }
-                  if (!selectedTimeSlot) {
-                    Alert.alert(
-                      'Select Delivery Time',
-                      'Please select a delivery time slot to proceed.'
+                      `Please add ₹${minimumOrderShortfall.toFixed(
+                        0,
+                      )} more to place your order.`,
                     );
                     return;
                   }
@@ -678,131 +791,176 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
   },
+  deliveryBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    borderRadius: 10,
+  },
+  shipmentInfo: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 4,
+  },
   cartItemsContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
     gap: 16,
   },
   cartItem: {
     flexDirection: 'row',
     borderRadius: 12,
-    padding: 12,
-    gap: 12,
+    padding: 16,
+    gap: 14,
+    alignItems: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   cartItemImage: {
     width: 80,
     height: 80,
-    borderRadius: 8,
+    borderRadius: 10,
   },
   cartItemDetails: {
     flex: 1,
-    gap: 4,
+    gap: 6,
+    paddingRight: 8,
+  },
+  cartItemName: {
+    fontWeight: '600',
+    fontSize: 15,
+    lineHeight: 20,
+    marginBottom: 2,
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 8,
+    gap: 10,
+    marginTop: 10,
   },
   quantityButton: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityText: {
-    minWidth: 30,
+    minWidth: 40,
     textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '600',
   },
   cartItemActions: {
-    justifyContent: 'space-between',
     alignItems: 'flex-end',
+    justifyContent: 'flex-start',
+    gap: 6,
+    paddingTop: 2,
+  },
+  originalPrice: {
+    textDecorationLine: 'line-through',
+    fontSize: 13,
+    marginBottom: 2,
   },
   itemTotal: {
-    marginBottom: 8,
-  },
-  removeButton: {
-    padding: 8,
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.primary,
   },
   summaryContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 8,
     borderTopWidth: 1,
-    gap: 16,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  checkoutButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    marginTop: 8,
+    gap: 20,
   },
   minimumOrderBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 20,
   },
-  deliverySection: {
+  sectionCard: {
+    borderRadius: 12,
+    marginHorizontal: 16,
     marginBottom: 16,
-    gap: 8,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  sectionHeader: {
+  sectionCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  toggleButton: {
+  sectionCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
+    flex: 1,
   },
-  timeSlotsContainer: {
-    marginTop: 8,
-    gap: 8,
-    maxHeight: 200,
-  },
-  timeSlotItem: {
-    flexDirection: 'row',
+  sectionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
+    justifyContent: 'center',
+    marginRight: 14,
   },
-  totalRow: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light.textSecondary + '20',
+  sectionCardText: {
+    flex: 1,
   },
-  promoSection: {
+  promoInputCard: {
+    borderRadius: 12,
+    marginHorizontal: 16,
     marginBottom: 16,
-    gap: 8,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  promoButton: {
+  promoInputContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
-    backgroundColor: Colors.primary + '10',
+    gap: 10,
   },
-  appliedPromo: {
+  promoInput: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    fontSize: 15,
+  },
+  applyPromoButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 10,
+    justifyContent: 'center',
+  },
+  appliedPromoCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: Colors.success + '15',
-    borderWidth: 1,
-    borderColor: Colors.success + '30',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   appliedPromoInfo: {
     flexDirection: 'row',
@@ -812,28 +970,74 @@ const styles = StyleSheet.create({
   removePromoButton: {
     padding: 4,
   },
-  promoInputContainer: {
+  billDetailsCard: {
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  billDetailsTitle: {
+    marginBottom: 20,
+    fontSize: 17,
+  },
+  billDetailRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  promoInput: {
+  billDetailLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    fontSize: 14,
   },
-  applyPromoButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    justifyContent: 'center',
+  billDetailRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  freeDeliveryBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginLeft: 8,
+  strikethroughPrice: {
+    textDecorationLine: 'line-through',
+    fontSize: 13,
+  },
+  grandTotalRow: {
+    marginTop: 12,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.textSecondary + '20',
+    marginBottom: 0,
+  },
+  savingsRow: {
+    marginTop: 16,
+    paddingTop: 16,
+  },
+  savingsDivider: {
+    height: 1,
+    backgroundColor: Colors.light.textSecondary + '20',
+    marginBottom: 12,
+  },
+  savingsContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  checkoutButton: {
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });

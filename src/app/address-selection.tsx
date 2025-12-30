@@ -1,6 +1,12 @@
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { StyleSheet, ActivityIndicator, Alert, TextInput, ScrollView } from 'react-native';
+import {
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  TextInput,
+  ScrollView,
+} from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -24,10 +30,10 @@ import { Address } from '@/types';
 export default function AddressSelection() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
-  const { savedAddresses, selectedAddress, isLoading, error } = useAppSelector(
-    (state) => state.location
+  const { savedAddresses, selectedAddress, isLoading } = useAppSelector(
+    state => state.location,
   );
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector(state => state.auth);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
@@ -54,7 +60,9 @@ export default function AddressSelection() {
     try {
       const locationResult = await dispatch(getCurrentLocation());
       if (getCurrentLocation.fulfilled.match(locationResult)) {
-        const geocodeResult = await dispatch(reverseGeocode(locationResult.payload));
+        const geocodeResult = await dispatch(
+          reverseGeocode(locationResult.payload),
+        );
         if (reverseGeocode.fulfilled.match(geocodeResult)) {
           setFormData({
             ...formData,
@@ -67,12 +75,22 @@ export default function AddressSelection() {
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to get current location');
+      Alert.alert(
+        'Error',
+        error instanceof Error
+          ? error.message
+          : 'Failed to get current location',
+      );
     }
   };
 
   const handleSaveAddress = async () => {
-    if (!formData.addressLine1 || !formData.city || !formData.state || !formData.pincode) {
+    if (
+      !formData.addressLine1 ||
+      !formData.city ||
+      !formData.state ||
+      !formData.pincode
+    ) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
@@ -89,16 +107,16 @@ export default function AddressSelection() {
             ...editingAddress,
             ...formData,
             userId: user.id,
-          })
+          }),
         );
       } else {
         await dispatch(
           saveAddress({
             userId: user.id,
             ...formData,
-            latitude: null,
-            longitude: null,
-          })
+            latitude: undefined,
+            longitude: undefined,
+          }),
         );
       }
       setIsEditing(false);
@@ -117,7 +135,10 @@ export default function AddressSelection() {
       });
       Alert.alert('Success', 'Address saved successfully');
     } catch (error) {
-      Alert.alert('Error', 'Failed to save address');
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to save address',
+      );
     }
   };
 
@@ -144,27 +165,38 @@ export default function AddressSelection() {
   };
 
   const handleDeleteAddress = (addressId: string) => {
-    Alert.alert('Delete Address', 'Are you sure you want to delete this address?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await dispatch(deleteAddress(addressId));
+    Alert.alert(
+      'Delete Address',
+      'Are you sure you want to delete this address?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await dispatch(deleteAddress(addressId));
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   if (isEditing) {
     return (
       <ThemedView
-        style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}
+        style={[
+          styles.container,
+          { backgroundColor: Colors[colorScheme].background },
+        ]}
       >
         <HeaderView>
           <ThemedView style={styles.header}>
             <ThemedPressable onPress={() => setIsEditing(false)}>
-              <IconSymbol name="chevron.left" size={24} color={Colors[colorScheme].textPrimary} />
+              <IconSymbol
+                name="chevron.left"
+                size={24}
+                color={Colors[colorScheme].textPrimary}
+              />
             </ThemedPressable>
             <ThemedText type="subtitle">
               {editingAddress ? 'Edit Address' : 'Add New Address'}
@@ -179,7 +211,10 @@ export default function AddressSelection() {
             style={[styles.locationButton, { backgroundColor: Colors.primary }]}
           >
             <IconSymbol name="location.fill" size={20} color={Colors.black} />
-            <ThemedText type="defaultSemiBold" style={{ color: Colors.black, marginLeft: 8 }}>
+            <ThemedText
+              type="defaultSemiBold"
+              style={{ color: Colors.black, marginLeft: 8 }}
+            >
               Use Current Location
             </ThemedText>
           </ThemedButton>
@@ -198,7 +233,7 @@ export default function AddressSelection() {
                 },
               ]}
               value={formData.label}
-              onChangeText={(text) => setFormData({ ...formData, label: text })}
+              onChangeText={text => setFormData({ ...formData, label: text })}
               placeholder="e.g., Home"
               placeholderTextColor={Colors[colorScheme].textSecondary}
             />
@@ -218,7 +253,9 @@ export default function AddressSelection() {
                 },
               ]}
               value={formData.addressLine1}
-              onChangeText={(text) => setFormData({ ...formData, addressLine1: text })}
+              onChangeText={text =>
+                setFormData({ ...formData, addressLine1: text })
+              }
               placeholder="Street address"
               placeholderTextColor={Colors[colorScheme].textSecondary}
             />
@@ -238,7 +275,9 @@ export default function AddressSelection() {
                 },
               ]}
               value={formData.addressLine2}
-              onChangeText={(text) => setFormData({ ...formData, addressLine2: text })}
+              onChangeText={text =>
+                setFormData({ ...formData, addressLine2: text })
+              }
               placeholder="Apartment, suite, etc."
               placeholderTextColor={Colors[colorScheme].textSecondary}
             />
@@ -259,7 +298,7 @@ export default function AddressSelection() {
                   },
                 ]}
                 value={formData.city}
-                onChangeText={(text) => setFormData({ ...formData, city: text })}
+                onChangeText={text => setFormData({ ...formData, city: text })}
                 placeholder="City"
                 placeholderTextColor={Colors[colorScheme].textSecondary}
               />
@@ -279,7 +318,7 @@ export default function AddressSelection() {
                   },
                 ]}
                 value={formData.state}
-                onChangeText={(text) => setFormData({ ...formData, state: text })}
+                onChangeText={text => setFormData({ ...formData, state: text })}
                 placeholder="State"
                 placeholderTextColor={Colors[colorScheme].textSecondary}
               />
@@ -300,7 +339,7 @@ export default function AddressSelection() {
                 },
               ]}
               value={formData.pincode}
-              onChangeText={(text) => setFormData({ ...formData, pincode: text })}
+              onChangeText={text => setFormData({ ...formData, pincode: text })}
               placeholder="Pincode"
               placeholderTextColor={Colors[colorScheme].textSecondary}
               keyboardType="numeric"
@@ -321,7 +360,9 @@ export default function AddressSelection() {
                 },
               ]}
               value={formData.contactName}
-              onChangeText={(text) => setFormData({ ...formData, contactName: text })}
+              onChangeText={text =>
+                setFormData({ ...formData, contactName: text })
+              }
               placeholder="Name"
               placeholderTextColor={Colors[colorScheme].textSecondary}
             />
@@ -341,7 +382,9 @@ export default function AddressSelection() {
                 },
               ]}
               value={formData.contactPhone}
-              onChangeText={(text) => setFormData({ ...formData, contactPhone: text })}
+              onChangeText={text =>
+                setFormData({ ...formData, contactPhone: text })
+              }
               placeholder="Phone number"
               placeholderTextColor={Colors[colorScheme].textSecondary}
               keyboardType="phone-pad"
@@ -349,13 +392,19 @@ export default function AddressSelection() {
           </ThemedView>
 
           <ThemedPressable
-            onPress={() => setFormData({ ...formData, isDefault: !formData.isDefault })}
+            onPress={() =>
+              setFormData({ ...formData, isDefault: !formData.isDefault })
+            }
             style={styles.checkboxContainer}
           >
             <IconSymbol
               name={formData.isDefault ? 'checkmark.square.fill' : 'square'}
               size={24}
-              color={formData.isDefault ? Colors.primary : Colors[colorScheme].textSecondary}
+              color={
+                formData.isDefault
+                  ? Colors.primary
+                  : Colors[colorScheme].textSecondary
+              }
             />
             <ThemedText type="small" style={{ marginLeft: 8 }}>
               Set as default address
@@ -378,12 +427,19 @@ export default function AddressSelection() {
 
   return (
     <ThemedView
-      style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}
+      style={[
+        styles.container,
+        { backgroundColor: Colors[colorScheme].background },
+      ]}
     >
       <HeaderView>
         <ThemedView style={styles.header}>
           <ThemedPressable onPress={() => router.back()}>
-            <IconSymbol name="chevron.left" size={24} color={Colors[colorScheme].textPrimary} />
+            <IconSymbol
+              name="chevron.left"
+              size={24}
+              color={Colors[colorScheme].textPrimary}
+            />
           </ThemedPressable>
           <ThemedText type="subtitle">Select Delivery Address</ThemedText>
           <ThemedView style={{ width: 24 }} />
@@ -393,12 +449,17 @@ export default function AddressSelection() {
       <ScrollView style={styles.content}>
         {!user?.id ? (
           <ThemedView style={styles.emptyContainer}>
-            <ThemedText type="subtitle">Please sign in to manage addresses</ThemedText>
+            <ThemedText type="subtitle">
+              Please sign in to manage addresses
+            </ThemedText>
             <ThemedButton
               onPress={() => router.push('/sign-in')}
               style={[styles.signInButton, { backgroundColor: Colors.primary }]}
             >
-              <ThemedText type="defaultSemiBold" style={{ color: Colors.black }}>
+              <ThemedText
+                type="defaultSemiBold"
+                style={{ color: Colors.black }}
+              >
                 Sign In
               </ThemedText>
             </ThemedButton>
@@ -410,7 +471,10 @@ export default function AddressSelection() {
               style={[styles.addButton, { backgroundColor: Colors.primary }]}
             >
               <IconSymbol name="plus" size={20} color={Colors.black} />
-              <ThemedText type="defaultSemiBold" style={{ color: Colors.black, marginLeft: 8 }}>
+              <ThemedText
+                type="defaultSemiBold"
+                style={{ color: Colors.black, marginLeft: 8 }}
+              >
                 Add New Address
               </ThemedText>
             </ThemedButton>
@@ -422,7 +486,11 @@ export default function AddressSelection() {
                 { backgroundColor: Colors[colorScheme].backgroundPaper },
               ]}
             >
-              <IconSymbol name="location.fill" size={20} color={Colors.primary} />
+              <IconSymbol
+                name="location.fill"
+                size={20}
+                color={Colors.primary}
+              />
               <ThemedText type="defaultSemiBold" style={{ marginLeft: 8 }}>
                 Use Current Location
               </ThemedText>
@@ -435,13 +503,16 @@ export default function AddressSelection() {
             ) : savedAddresses.length === 0 ? (
               <ThemedView style={styles.emptyContainer}>
                 <ThemedText type="subtitle">No saved addresses</ThemedText>
-                <ThemedText type="small" style={{ marginTop: 8, textAlign: 'center' }}>
+                <ThemedText
+                  type="small"
+                  style={{ marginTop: 8, textAlign: 'center' }}
+                >
                   Add an address to get started
                 </ThemedText>
               </ThemedView>
             ) : (
               <ThemedView style={styles.addressesList}>
-                {savedAddresses.map((address) => (
+                {savedAddresses.map(address => (
                   <ThemedView
                     key={address.id}
                     style={[
@@ -467,13 +538,16 @@ export default function AddressSelection() {
                               address.type === 'home'
                                 ? 'house.fill'
                                 : address.type === 'work'
-                                  ? 'briefcase.fill'
-                                  : 'mappin.circle.fill'
+                                ? 'tag.fill'
+                                : 'location.fill'
                             }
                             size={16}
                             color={Colors.primary}
                           />
-                          <ThemedText type="defaultSemiBold" style={{ marginLeft: 8 }}>
+                          <ThemedText
+                            type="defaultSemiBold"
+                            style={{ marginLeft: 8 }}
+                          >
                             {address.label}
                           </ThemedText>
                           {address.isDefault && (
@@ -485,7 +559,10 @@ export default function AddressSelection() {
                             >
                               <ThemedText
                                 type="xsmall"
-                                style={{ color: Colors.primary, fontWeight: 'bold' }}
+                                style={{
+                                  color: Colors.primary,
+                                  fontWeight: 'bold',
+                                }}
                               >
                                 DEFAULT
                               </ThemedText>
@@ -497,13 +574,21 @@ export default function AddressSelection() {
                         {address.addressLine1}
                       </ThemedText>
                       {address.addressLine2 && (
-                        <ThemedText type="small">{address.addressLine2}</ThemedText>
+                        <ThemedText type="small">
+                          {address.addressLine2}
+                        </ThemedText>
                       )}
                       <ThemedText type="small">
                         {address.city}, {address.state} {address.pincode}
                       </ThemedText>
                       {address.contactPhone && (
-                        <ThemedText type="xsmall" style={{ marginTop: 4, color: Colors[colorScheme].textSecondary }}>
+                        <ThemedText
+                          type="xsmall"
+                          style={{
+                            marginTop: 4,
+                            color: Colors[colorScheme].textSecondary,
+                          }}
+                        >
                           Phone: {address.contactPhone}
                         </ThemedText>
                       )}
@@ -513,13 +598,21 @@ export default function AddressSelection() {
                         onPress={() => handleEditAddress(address)}
                         style={styles.actionButton}
                       >
-                        <IconSymbol name="pencil" size={18} color={Colors[colorScheme].textPrimary} />
+                        <IconSymbol
+                          name="pencil"
+                          size={18}
+                          color={Colors[colorScheme].textPrimary}
+                        />
                       </ThemedButton>
                       <ThemedButton
                         onPress={() => handleDeleteAddress(address.id)}
                         style={styles.actionButton}
                       >
-                        <IconSymbol name="trash.fill" size={18} color={Colors.error} />
+                        <IconSymbol
+                          name="trash.fill"
+                          size={18}
+                          color={Colors.error}
+                        />
                       </ThemedButton>
                     </ThemedView>
                   </ThemedView>
@@ -646,4 +739,3 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 });
-

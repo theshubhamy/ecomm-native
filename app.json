@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "ecomm-native",
-    "slug": "ecomm-native",
+    "name": "QuickShop",
+    "slug": "quickshop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
-    "scheme": "ecommnative",
+    "scheme": "quickshop",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "web": {
@@ -36,7 +36,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.theshubham.ecomm-native",
+      "bundleIdentifier": "com.theshubham.quickshop",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses your location to find nearby delivery addresses and provide accurate delivery services.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to find nearby delivery addresses and provide accurate delivery services."
@@ -48,7 +48,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.theshubham.ecommnative",
+      "package": "com.theshubham.quickshop",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"

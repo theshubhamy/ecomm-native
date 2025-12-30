@@ -1,9 +1,8 @@
 import { useThemeColor } from '@/hooks/useThemeColor';
-import React, { forwardRef } from 'react';
+import React, { forwardRef, ReactNode } from 'react';
 import {
-  GestureResponderEvent,
   TouchableOpacity,
-  ViewProps,
+  TouchableOpacityProps,
 } from 'react-native';
 
 type ThemeColorName =
@@ -16,23 +15,21 @@ type ThemeColorName =
   | 'textPrimary'
   | 'textSecondary';
 
-export type ThemedViewProps = ViewProps & {
+export type ThemedButtonProps = TouchableOpacityProps & {
   lightColor?: string;
   darkColor?: string;
   colorName?: ThemeColorName;
-  onPress?: (event: GestureResponderEvent) => void;
-  style?: ViewProps['style'];
-  disabled?: boolean;
+  children?: ReactNode;
 };
 
-export const ThemedButton = forwardRef<any, ThemedViewProps>(
+export const ThemedButton = forwardRef<TouchableOpacity, ThemedButtonProps>(
   (
     {
       style,
       lightColor,
       darkColor,
       colorName = 'backgroundPaper',
-      disabled,
+      children,
       ...otherProps
     },
     ref,
@@ -43,14 +40,15 @@ export const ThemedButton = forwardRef<any, ThemedViewProps>(
     );
 
     return (
-        <TouchableOpacity
-          ref={ref}
-          style={[{ backgroundColor }, style]}
-          disabled={disabled}
-          accessible={true}
-          accessibilityRole="button"
-          {...otherProps}
-        />
+      <TouchableOpacity
+        ref={ref}
+        style={[{ backgroundColor }, style]}
+        accessible={true}
+        accessibilityRole="button"
+        {...otherProps}
+      >
+        {children}
+      </TouchableOpacity>
     );
   },
 );

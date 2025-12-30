@@ -1,6 +1,6 @@
-# Quick Commerce - E-Commerce Mobile App
+# QuickShop - Quick Commerce Mobile App
 
-A modern, full-featured e-commerce mobile application built with React Native, Expo, and Supabase. This app provides a complete shopping experience with real-time inventory updates, secure payments, order tracking, and more.
+A modern, full-featured quick commerce mobile application built with React Native, Expo, and Supabase. QuickShop provides a complete shopping experience with instant delivery, real-time inventory updates, secure payments, order tracking, and more.
 
 ## 🚀 Features
 
@@ -54,7 +54,7 @@ A modern, full-featured e-commerce mobile application built with React Native, E
 
    ```bash
    git clone <repository-url>
-   cd ecomm-native
+   cd quickshop
    ```
 
 2. **Install dependencies**
@@ -77,7 +77,7 @@ A modern, full-featured e-commerce mobile application built with React Native, E
    EXPO_PUBLIC_API_URL=https://your-backend-api.com
 
    # App Scheme (for deep linking)
-   EXPO_PUBLIC_APP_SCHEME=ecommnative
+   EXPO_PUBLIC_APP_SCHEME=quickshop
    ```
 
 4. **Set up Supabase Database**
@@ -136,7 +136,7 @@ A modern, full-featured e-commerce mobile application built with React Native, E
 ## 📁 Project Structure
 
 ```
-ecomm-native/
+quickshop/
 ├── src/
 │   ├── app/                    # Expo Router pages
 │   │   ├── (tabs)/            # Tab navigation screens

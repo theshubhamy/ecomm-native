@@ -7,15 +7,24 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchOrders, cancelOrder, setSelectedOrder, reorder } from '@/store/slices/ordersSlice';
+import { ThemedButton } from '@/components/ThemedButton';
+import {
+  fetchOrders,
+  cancelOrder,
+  setSelectedOrder,
+  reorder,
+  Order,
+} from '@/store/slices/ordersSlice';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { StyleSheet, Alert } from 'react-native';
 import { OrderCardSkeleton } from '@/components/SkeletonLoader';
 import { router } from 'expo-router';
-import { Order } from '@/store/slices/ordersSlice';
 
-const getStatusColor = (status: Order['status']) => {
+const getStatusColor = (
+  status: Order['status'],
+  colorScheme: 'light' | 'dark',
+) => {
   switch (status) {
     case 'delivered':
       return Colors.success;
@@ -28,7 +37,7 @@ const getStatusColor = (status: Order['status']) => {
     case 'cancelled':
       return Colors.error;
     default:
-      return Colors[useColorScheme()].textSecondary;
+      return Colors[colorScheme as 'light' | 'dark'].textSecondary;
   }
 };
 
@@ -51,9 +60,19 @@ const getStatusLabel = (status: Order['status']) => {
   }
 };
 
-const OrderCard = ({ order, onPress, onCancel, onReorder }: { order: Order; onPress: () => void; onCancel: () => void; onReorder: () => void }) => {
+const OrderCard = ({
+  order,
+  onPress,
+  onCancel,
+  onReorder,
+}: {
+  order: Order;
+  onPress: () => void;
+  onCancel: () => void;
+  onReorder: () => void;
+}) => {
   const colorScheme = useColorScheme();
-  const statusColor = getStatusColor(order.status);
+  const statusColor = getStatusColor(order.status, colorScheme);
   const canCancel = order.status === 'pending' || order.status === 'confirmed';
   const canReorder = order.status === 'delivered';
 
@@ -67,7 +86,9 @@ const OrderCard = ({ order, onPress, onCancel, onReorder }: { order: Order; onPr
     >
       <ThemedView style={styles.orderHeader}>
         <ThemedView style={styles.orderInfo}>
-          <ThemedText type="defaultSemiBold">Order #{order.order_number}</ThemedText>
+          <ThemedText type="defaultSemiBold">
+            Order #{order.order_number}
+          </ThemedText>
           <ThemedText
             type="xsmall"
             style={{ color: Colors[colorScheme].textSecondary, marginTop: 2 }}
@@ -80,10 +101,7 @@ const OrderCard = ({ order, onPress, onCancel, onReorder }: { order: Order; onPr
           </ThemedText>
         </ThemedView>
         <ThemedView
-          style={[
-            styles.statusBadge,
-            { backgroundColor: statusColor + '20' },
-          ]}
+          style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}
         >
           <ThemedText
             type="xsmall"
@@ -95,7 +113,7 @@ const OrderCard = ({ order, onPress, onCancel, onReorder }: { order: Order; onPr
       </ThemedView>
 
       <ThemedView style={styles.orderItems}>
-        {order.items.slice(0, 3).map((item) => (
+        {order.items.slice(0, 3).map(item => (
           <ThemedView key={item.id} style={styles.orderItem}>
             {item.product_image && (
               <Image
@@ -112,7 +130,7 @@ const OrderCard = ({ order, onPress, onCancel, onReorder }: { order: Order; onPr
                 type="xsmall"
                 style={{ color: Colors[colorScheme].textSecondary }}
               >
-                Qty: {item.quantity} × ${item.price.toFixed(2)}
+                Qty: {item.quantity} × ₹{item.price.toFixed(0)}
               </ThemedText>
             </ThemedView>
           </ThemedView>
@@ -140,7 +158,7 @@ const OrderCard = ({ order, onPress, onCancel, onReorder }: { order: Order; onPr
             Total Amount
           </ThemedText>
           <ThemedText type="subtitle" style={{ color: Colors.primary }}>
-            ${order.total_amount.toFixed(2)}
+            ₹{order.total_amount.toFixed(0)}
           </ThemedText>
         </ThemedView>
         <ThemedView style={styles.orderActions}>
@@ -155,7 +173,11 @@ const OrderCard = ({ order, onPress, onCancel, onReorder }: { order: Order; onPr
               <IconSymbol name="cart.fill" size={16} color={Colors.black} />
               <ThemedText
                 type="small"
-                style={{ color: Colors.black, fontWeight: '600', marginLeft: 4 }}
+                style={{
+                  color: Colors.black,
+                  fontWeight: '600',
+                  marginLeft: 4,
+                }}
               >
                 Re-order
               </ThemedText>
@@ -186,8 +208,8 @@ const OrderCard = ({ order, onPress, onCancel, onReorder }: { order: Order; onPr
 export default function Orders() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
-  const { orders, isLoading, error } = useAppSelector((state) => state.orders);
-  const { user } = useAppSelector((state) => state.auth);
+  const { orders, isLoading, error } = useAppSelector(state => state.orders);
+  const { user } = useAppSelector(state => state.auth);
   const [filter, setFilter] = useState<'all' | Order['status']>('all');
 
   useEffect(() => {
@@ -197,9 +219,7 @@ export default function Orders() {
   }, [user, dispatch]);
 
   const filteredOrders =
-    filter === 'all'
-      ? orders
-      : orders.filter((order) => order.status === filter);
+    filter === 'all' ? orders : orders.filter(order => order.status === filter);
 
   const handleOrderPress = (order: Order) => {
     dispatch(setSelectedOrder(order));
@@ -221,7 +241,7 @@ export default function Orders() {
             dispatch(cancelOrder({ userId: user.id, orderId: order.id }));
           },
         },
-      ]
+      ],
     );
   };
 
@@ -237,12 +257,12 @@ export default function Orders() {
             onPress: () => router.push('/(tabs)/cart'),
           },
           { text: 'OK' },
-        ]
+        ],
       );
     } catch (error) {
       Alert.alert(
         'Error',
-        error instanceof Error ? error.message : 'Failed to reorder'
+        error instanceof Error ? error.message : 'Failed to reorder',
       );
     }
   };
@@ -272,40 +292,47 @@ export default function Orders() {
       {orders.length > 0 && (
         <ThemedView style={styles.filterContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {(['all', 'pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'] as const).map(
-              (status) => (
-                <ThemedPressable
-                  key={status}
-                  onPress={() => setFilter(status)}
-                  style={[
-                    styles.filterTab,
-                    {
-                      backgroundColor:
-                        filter === status
-                          ? Colors.primary
-                          : Colors[colorScheme].backgroundPaper,
-                    },
-                  ]}
+            {(
+              [
+                'all',
+                'pending',
+                'confirmed',
+                'preparing',
+                'out_for_delivery',
+                'delivered',
+              ] as const
+            ).map(status => (
+              <ThemedPressable
+                key={status}
+                onPress={() => setFilter(status)}
+                style={[
+                  styles.filterTab,
+                  {
+                    backgroundColor:
+                      filter === status
+                        ? Colors.primary
+                        : Colors[colorScheme].backgroundPaper,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="small"
+                  style={{
+                    color:
+                      filter === status
+                        ? Colors.black
+                        : Colors[colorScheme].textPrimary,
+                    fontWeight: filter === status ? '600' : '400',
+                  }}
                 >
-                  <ThemedText
-                    type="small"
-                    style={{
-                      color:
-                        filter === status
-                          ? Colors.black
-                          : Colors[colorScheme].textPrimary,
-                      fontWeight: filter === status ? '600' : '400',
-                    }}
-                  >
-                    {status === 'all'
-                      ? 'All'
-                      : status === 'out_for_delivery'
-                      ? 'Out for Delivery'
-                      : status.charAt(0).toUpperCase() + status.slice(1)}
-                  </ThemedText>
-                </ThemedPressable>
-              )
-            )}
+                  {status === 'all'
+                    ? 'All'
+                    : status === 'out_for_delivery'
+                    ? 'Out for Delivery'
+                    : status.charAt(0).toUpperCase() + status.slice(1)}
+                </ThemedText>
+              </ThemedPressable>
+            ))}
           </ScrollView>
         </ThemedView>
       )}
@@ -330,7 +357,7 @@ export default function Orders() {
           </ThemedView>
         ) : isLoading ? (
           <ThemedView style={styles.ordersList}>
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3].map(i => (
               <OrderCardSkeleton key={i} />
             ))}
           </ThemedView>
@@ -368,7 +395,7 @@ export default function Orders() {
           </ThemedView>
         ) : (
           <ThemedView style={styles.ordersList}>
-            {filteredOrders.map((order) => (
+            {filteredOrders.map(order => (
               <OrderCard
                 key={order.id}
                 order={order}
@@ -500,4 +527,3 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 });
-
