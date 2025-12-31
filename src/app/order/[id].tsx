@@ -351,7 +351,8 @@ export default function OrderDetail() {
                   type="xsmall"
                   style={{ color: Colors.success, marginLeft: 8 }}
                 >
-                  Saved ₹{((selectedOrder as any).discount_amount || 0).toFixed(0)}
+                  Saved ₹
+                  {((selectedOrder as any).discount_amount || 0).toFixed(0)}
                 </ThemedText>
               )}
             </ThemedView>
@@ -365,14 +366,19 @@ export default function OrderDetail() {
                       { color: Colors[colorScheme].textSecondary },
                     ]}
                   >
-                    ₹{((selectedOrder as any).subtotal || selectedOrder.total_amount).toFixed(0)}
+                    ₹
+                    {(
+                      (selectedOrder as any).subtotal ||
+                      selectedOrder.total_amount
+                    ).toFixed(0)}
                   </ThemedText>
                 )}
               <ThemedText
                 type="small"
                 style={{ color: Colors[colorScheme].textPrimary }}
               >
-                ₹{(
+                ₹
+                {(
                   (selectedOrder as any).subtotal ||
                   selectedOrder.total_amount -
                     (selectedOrder.delivery_fee || 0) -
@@ -390,10 +396,7 @@ export default function OrderDetail() {
               >
                 Discount Applied
               </ThemedText>
-              <ThemedText
-                type="small"
-                style={{ color: Colors.success, fontWeight: '600' }}
-              >
+              <ThemedText type="small" style={{ color: Colors.success }}>
                 -₹{((selectedOrder as any).discount_amount || 0).toFixed(0)}
               </ThemedText>
             </ThemedView>
