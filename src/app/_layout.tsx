@@ -27,7 +27,9 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <StoreProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider
+          value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+        >
           <SafeAreaProvider>
             <RootNavigator />
           </SafeAreaProvider>
@@ -39,7 +41,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const user = useAppSelector((state) => state.auth.user);
+  const user = useAppSelector(state => state.auth.user);
 
   return (
     <Stack>
@@ -48,7 +50,11 @@ function RootNavigator() {
         <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="order/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="checkout" options={{ headerShown: false }} />
-        <Stack.Screen name="address-selection" options={{ headerShown: false }} />
+        <Stack.Screen name="coupons" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="address-selection"
+          options={{ headerShown: false }}
+        />
       </Stack.Protected>
 
       <Stack.Protected guard={!user}>

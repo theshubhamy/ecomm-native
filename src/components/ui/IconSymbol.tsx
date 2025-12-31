@@ -39,10 +39,12 @@ const MAPPING = {
   pencil: 'edit',
   'trash.fill': 'delete',
   'checkmark.square.fill': 'check-box',
+  'checkmark.circle.fill': 'check-circle',
   square: 'check-box-outline-blank',
   'creditcard.fill': 'credit-card',
   xmark: 'close',
   'xmark.circle.fill': 'cancel',
+  'exclamationmark.circle.fill': 'error',
   'square.grid.2x2': 'apps',
   'square.grid.2x2.fill': 'apps',
   tag: 'local-offer',
@@ -52,6 +54,7 @@ const MAPPING = {
   'cash.fill': 'attach-money',
   cash: 'attach-money',
   'clock.fill': 'access-time',
+  calendar: 'calendar-today',
 } as const;
 
 export function IconSymbol({

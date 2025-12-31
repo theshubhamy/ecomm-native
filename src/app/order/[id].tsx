@@ -311,19 +311,19 @@ export default function OrderDetail() {
                 <ThemedText type="defaultSemiBold">
                   {item.product_name}
                 </ThemedText>
-                     <ThemedText
-                       type="small"
-                       style={{
-                         color: Colors[colorScheme].textSecondary,
-                         marginTop: 4,
-                       }}
-                     >
-                       Quantity: {item.quantity} × ₹{item.price.toFixed(0)}
-                     </ThemedText>
-                   </ThemedView>
-                   <ThemedText type="defaultSemiBold" style={styles.itemTotal}>
-                     ₹{item.total.toFixed(0)}
-                   </ThemedText>
+                <ThemedText
+                  type="small"
+                  style={{
+                    color: Colors[colorScheme].textSecondary,
+                    marginTop: 4,
+                  }}
+                >
+                  Quantity: {item.quantity} × ₹{item.price.toFixed(0)}
+                </ThemedText>
+              </ThemedView>
+              <ThemedText type="defaultSemiBold" style={styles.itemTotal}>
+                ₹{item.total.toFixed(0)}
+              </ThemedText>
             </ThemedView>
           ))}
         </ThemedView>
