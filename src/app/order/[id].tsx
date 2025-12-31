@@ -376,7 +376,7 @@ export default function OrderDetail() {
                   (selectedOrder as any).subtotal ||
                   selectedOrder.total_amount -
                     (selectedOrder.delivery_fee || 0) -
-                    ((selectedOrder as any).handling_charge || 0) -
+                    ((selectedOrder as any).handling_charge || 0) +
                     ((selectedOrder as any).discount_amount || 0)
                 ).toFixed(0)}
               </ThemedText>

@@ -39,9 +39,9 @@ A modern, full-featured quick commerce mobile application built with React Nativ
 | :----------------------------------------------------------: | :----------------------------------------------------------------------: |
 | <img src="snaps/cart.jpeg" alt="Shopping Cart" width="300"/> | <img src="snaps/productDetails.jpeg" alt="Product Details" width="300"/> |
 
-|                          User Profile                          |
-| :------------------------------------------------------------: |
-| <img src="snaps/profile.jpeg" alt="User Profile" width="300"/> |
+|                             Orders                             |                          User Profile                          |
+| :------------------------------------------------------------: | :------------------------------------------------------------: |
+| <img src="snaps/order.jpeg" alt="Orders" width="300"/> | <img src="snaps/profile.jpeg" alt="User Profile" width="300"/> |
 
 </div>
 
