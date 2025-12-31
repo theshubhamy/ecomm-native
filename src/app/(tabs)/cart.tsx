@@ -202,153 +202,151 @@ export default function Cart() {
           ) : (
             <>
               {/* Cart Items */}
-              <ThemedView>
-                {items.length > 0 && (
+              {items.length > 0 && (
+                <ThemedView
+                  style={[
+                    styles.deliveryBanner,
+                    {
+                      backgroundColor: Colors[colorScheme].backgroundPaper,
+                    },
+                  ]}
+                >
+                  <ThemedView style={styles.deliveryBannerBody}>
+                    <ThemedView style={styles.deliveryBannerIcon}>
+                      <IconSymbol
+                        name="clock.fill"
+                        size={24}
+                        color={Colors.primary}
+                      />
+                    </ThemedView>
+                    <ThemedView style={styles.deliveryBannerContent}>
+                      <ThemedText
+                        type="defaultSemiBold"
+                        style={styles.deliveryTitle}
+                      >
+                        Delivery in 15 minutes 🚀
+                      </ThemedText>
+                      <ThemedText
+                        type="xsmall"
+                        style={{ color: Colors[colorScheme].textSecondary }}
+                      >
+                        Shipment of {items.length}
+                        {items.length === 1 ? ' item' : ' items'}
+                      </ThemedText>
+                    </ThemedView>
+                  </ThemedView>
+                </ThemedView>
+              )}
+              {items.map(item => {
+                const itemPrice = item.product.price || 0;
+                const originalPrice =
+                  (item.product as any).originalPrice || itemPrice;
+                const hasDiscount = originalPrice > itemPrice;
+                const itemTotal = itemPrice * item.quantity;
+                const originalTotal = originalPrice * item.quantity;
+
+                return (
                   <ThemedView
-                    style={[
-                      styles.deliveryBanner,
-                      {
-                        backgroundColor: Colors[colorScheme].backgroundPaper,
-                      },
-                    ]}
+                    key={item.product.id}
+                    style={styles.cartItemsContainer}
                   >
-                    <ThemedView style={styles.deliveryBannerBody}>
-                      <ThemedView style={styles.deliveryBannerIcon}>
-                        <IconSymbol
-                          name="clock.fill"
-                          size={24}
-                          color={Colors.primary}
-                        />
+                    <ThemedView style={[styles.cartItem]}>
+                      <Image
+                        source={
+                          item.product.imageUrl
+                            ? { uri: item.product.imageUrl }
+                            : require('../../assets/images/icon.png')
+                        }
+                        style={styles.cartItemImage}
+                        contentFit="cover"
+                      />
+                      <ThemedView style={styles.cartItemDetails}>
+                        <ThemedView style={styles.cartItemInfo}>
+                          <ThemedText type="small" numberOfLines={2}>
+                            {item.product.name}
+                          </ThemedText>
+                          {(item.product as any).weight && (
+                            <ThemedText
+                              type="xsmall"
+                              style={styles.cartItemWeight}
+                            >
+                              {(item.product as any).weight}
+                            </ThemedText>
+                          )}
+                        </ThemedView>
                       </ThemedView>
-                      <ThemedView style={styles.deliveryBannerContent}>
-                        <ThemedText
-                          type="defaultSemiBold"
-                          style={styles.deliveryTitle}
-                        >
-                          Delivery in 15 minutes 🚀
-                        </ThemedText>
-                        <ThemedText
-                          type="xsmall"
-                          style={{ color: Colors[colorScheme].textSecondary }}
-                        >
-                          Shipment of {items.length}
-                          {items.length === 1 ? ' item' : ' items'}
+                      <ThemedView style={styles.cartItemActions}>
+                        <ThemedView style={styles.quantityContainer}>
+                          <ThemedButton
+                            onPress={() =>
+                              handleUpdateQuantity(
+                                item.product.id,
+                                item.quantity - 1,
+                              )
+                            }
+                            style={[
+                              styles.quantityButton,
+                              { backgroundColor: Colors.primary },
+                            ]}
+                            accessible={true}
+                            accessibilityLabel={`Decrease quantity of ${item.product.name}`}
+                            accessibilityRole="button"
+                          >
+                            <IconSymbol
+                              name="minus"
+                              size={14}
+                              color={Colors.black}
+                            />
+                          </ThemedButton>
+                          <ThemedText
+                            type="small"
+                            accessible={true}
+                            accessibilityRole="text"
+                            accessibilityLabel={`Quantity: ${item.quantity}`}
+                          >
+                            {item.quantity}
+                          </ThemedText>
+                          <ThemedButton
+                            onPress={() =>
+                              handleUpdateQuantity(
+                                item.product.id,
+                                item.quantity + 1,
+                              )
+                            }
+                            style={[
+                              styles.quantityButton,
+                              { backgroundColor: Colors.primary },
+                            ]}
+                            accessible={true}
+                            accessibilityLabel={`Increase quantity of ${item.product.name}`}
+                            accessibilityRole="button"
+                          >
+                            <IconSymbol
+                              name="plus"
+                              size={14}
+                              color={Colors.black}
+                            />
+                          </ThemedButton>
+                        </ThemedView>
+                        {hasDiscount && (
+                          <ThemedText
+                            type="xsmall"
+                            style={[
+                              styles.originalPrice,
+                              { color: Colors[colorScheme].textSecondary },
+                            ]}
+                          >
+                            ₹{originalTotal.toFixed(0)}
+                          </ThemedText>
+                        )}
+                        <ThemedText type="small">
+                          ₹{itemTotal.toFixed(0)}
                         </ThemedText>
                       </ThemedView>
                     </ThemedView>
                   </ThemedView>
-                )}
-                {items.map(item => {
-                  const itemPrice = item.product.price || 0;
-                  const originalPrice =
-                    (item.product as any).originalPrice || itemPrice;
-                  const hasDiscount = originalPrice > itemPrice;
-                  const itemTotal = itemPrice * item.quantity;
-                  const originalTotal = originalPrice * item.quantity;
-
-                  return (
-                    <ThemedView
-                      key={item.product.id}
-                      style={styles.cartItemsContainer}
-                    >
-                      <ThemedView style={[styles.cartItem]}>
-                        <Image
-                          source={
-                            item.product.imageUrl
-                              ? { uri: item.product.imageUrl }
-                              : require('../../assets/images/icon.png')
-                          }
-                          style={styles.cartItemImage}
-                          contentFit="cover"
-                        />
-                        <ThemedView style={styles.cartItemDetails}>
-                          <ThemedView style={styles.cartItemInfo}>
-                            <ThemedText type="small" numberOfLines={2}>
-                              {item.product.name}
-                            </ThemedText>
-                            {(item.product as any).weight && (
-                              <ThemedText
-                                type="xsmall"
-                                style={styles.cartItemWeight}
-                              >
-                                {(item.product as any).weight}
-                              </ThemedText>
-                            )}
-                          </ThemedView>
-                        </ThemedView>
-                        <ThemedView style={styles.cartItemActions}>
-                          <ThemedView style={styles.quantityContainer}>
-                            <ThemedButton
-                              onPress={() =>
-                                handleUpdateQuantity(
-                                  item.product.id,
-                                  item.quantity - 1,
-                                )
-                              }
-                              style={[
-                                styles.quantityButton,
-                                { backgroundColor: Colors.primary },
-                              ]}
-                              accessible={true}
-                              accessibilityLabel={`Decrease quantity of ${item.product.name}`}
-                              accessibilityRole="button"
-                            >
-                              <IconSymbol
-                                name="minus"
-                                size={14}
-                                color={Colors.black}
-                              />
-                            </ThemedButton>
-                            <ThemedText
-                              type="small"
-                              accessible={true}
-                              accessibilityRole="text"
-                              accessibilityLabel={`Quantity: ${item.quantity}`}
-                            >
-                              {item.quantity}
-                            </ThemedText>
-                            <ThemedButton
-                              onPress={() =>
-                                handleUpdateQuantity(
-                                  item.product.id,
-                                  item.quantity + 1,
-                                )
-                              }
-                              style={[
-                                styles.quantityButton,
-                                { backgroundColor: Colors.primary },
-                              ]}
-                              accessible={true}
-                              accessibilityLabel={`Increase quantity of ${item.product.name}`}
-                              accessibilityRole="button"
-                            >
-                              <IconSymbol
-                                name="plus"
-                                size={14}
-                                color={Colors.black}
-                              />
-                            </ThemedButton>
-                          </ThemedView>
-                          {hasDiscount && (
-                            <ThemedText
-                              type="xsmall"
-                              style={[
-                                styles.originalPrice,
-                                { color: Colors[colorScheme].textSecondary },
-                              ]}
-                            >
-                              ₹{originalTotal.toFixed(0)}
-                            </ThemedText>
-                          )}
-                          <ThemedText type="small">
-                            ₹{itemTotal.toFixed(0)}
-                          </ThemedText>
-                        </ThemedView>
-                      </ThemedView>
-                    </ThemedView>
-                  );
-                })}
-              </ThemedView>
+                );
+              })}
 
               {/* Summary Section */}
               <ThemedView style={styles.summaryContainer}>

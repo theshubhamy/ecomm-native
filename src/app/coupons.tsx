@@ -215,7 +215,8 @@ export default function Coupons() {
                           disabled={
                             !isEligible ||
                             isExpired ||
-                            applyingCoupon === offer.id
+                            applyingCoupon === offer.id ||
+                            !offer.promo_code
                           }
                           style={[
                             styles.applyButton,
