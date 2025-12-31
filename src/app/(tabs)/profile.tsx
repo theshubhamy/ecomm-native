@@ -174,7 +174,7 @@ export default function Profile() {
               icon="cart.fill"
               title="My Orders"
               subtitle="View order history"
-              onPress={() => router.push('/(tabs)/orders')}
+              onPress={() => router.push('/orders')}
               colorScheme={colorScheme}
             />
 

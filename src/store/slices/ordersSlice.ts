@@ -24,6 +24,10 @@ export interface Order {
     | 'delivered'
     | 'cancelled';
   total_amount: number;
+  subtotal?: number;
+  discount_amount?: number;
+  handling_charge?: number;
+  applied_offer_id?: string | null;
   delivery_fee: number;
   payment_method: string;
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
@@ -66,8 +70,7 @@ export const fetchOrders = createAsyncThunk(
             quantity,
             price,
             total
-          ),
-          addresses (*)
+          )
         `,
         )
         .eq('user_id', userId)
@@ -84,10 +87,14 @@ export const fetchOrders = createAsyncThunk(
           order.order_number || `ORD-${order.id.slice(0, 8).toUpperCase()}`,
         status: order.status || 'pending',
         total_amount: order.total_amount || 0,
+        subtotal: order.subtotal,
+        discount_amount: order.discount_amount || 0,
+        handling_charge: order.handling_charge || 0,
+        applied_offer_id: order.applied_offer_id || null,
         delivery_fee: order.delivery_fee || 0,
         payment_method: order.payment_method || 'cash',
         payment_status: order.payment_status || 'pending',
-        delivery_address: order.addresses || order.delivery_address,
+        delivery_address: order.delivery_address,
         delivery_time_slot: order.delivery_time_slot,
         items: order.order_items || [],
         created_at: order.created_at,
@@ -124,8 +131,7 @@ export const fetchOrderById = createAsyncThunk(
             quantity,
             price,
             total
-          ),
-          addresses (*)
+          )
         `,
         )
         .eq('id', orderId)
@@ -143,10 +149,14 @@ export const fetchOrderById = createAsyncThunk(
           data.order_number || `ORD-${data.id.slice(0, 8).toUpperCase()}`,
         status: data.status || 'pending',
         total_amount: data.total_amount || 0,
+        subtotal: data.subtotal,
+        discount_amount: data.discount_amount || 0,
+        handling_charge: data.handling_charge || 0,
+        applied_offer_id: data.applied_offer_id || null,
         delivery_fee: data.delivery_fee || 0,
         payment_method: data.payment_method || 'cash',
         payment_status: data.payment_status || 'pending',
-        delivery_address: data.addresses || data.delivery_address,
+        delivery_address: data.delivery_address,
         delivery_time_slot: data.delivery_time_slot,
         items: data.order_items || [],
         created_at: data.created_at,

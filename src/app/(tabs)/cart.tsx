@@ -350,26 +350,6 @@ export default function Cart() {
 
               {/* Summary Section */}
               <ThemedView style={styles.summaryContainer}>
-                {/* Minimum Order Validation */}
-                {!isMinimumOrderMet && (
-                  <ThemedView
-                    style={[
-                      styles.minimumOrderBanner,
-                      { backgroundColor: Colors.warning + '15' },
-                    ]}
-                  >
-                    <IconSymbol
-                      name="notification.fill"
-                      size={20}
-                      color={Colors.warning}
-                    />
-                    <ThemedText type="small" style={styles.minimumOrderText}>
-                      Add ₹{minimumOrderShortfall.toFixed(0)} more to place
-                      order (Minimum: ₹{MINIMUM_ORDER_AMOUNT.toFixed(0)})
-                    </ThemedText>
-                  </ThemedView>
-                )}
-
                 {/* Use Coupons Section */}
                 <ThemedView
                   style={[

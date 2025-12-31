@@ -339,22 +339,65 @@ export default function OrderDetail() {
             Payment Summary
           </ThemedText>
           <ThemedView style={styles.summaryRow}>
-            <ThemedText
-              type="small"
-              style={{ color: Colors[colorScheme].textSecondary }}
-            >
-              Subtotal
-            </ThemedText>
-            <ThemedText
-              type="small"
-              style={{ color: Colors[colorScheme].textSecondary }}
-            >
-              $
-              {(
-                selectedOrder.total_amount - selectedOrder.delivery_fee
-              ).toFixed(2)}
-            </ThemedText>
+            <ThemedView style={styles.summaryRowLeft}>
+              <ThemedText
+                type="small"
+                style={{ color: Colors[colorScheme].textSecondary }}
+              >
+                Subtotal
+              </ThemedText>
+              {(selectedOrder as any).discount_amount > 0 && (
+                <ThemedText
+                  type="xsmall"
+                  style={{ color: Colors.success, marginLeft: 8 }}
+                >
+                  Saved ₹{((selectedOrder as any).discount_amount || 0).toFixed(0)}
+                </ThemedText>
+              )}
+            </ThemedView>
+            <ThemedView style={styles.summaryRowRight}>
+              {(selectedOrder as any).discount_amount > 0 &&
+                (selectedOrder as any).subtotal && (
+                  <ThemedText
+                    type="xsmall"
+                    style={[
+                      styles.strikethroughPrice,
+                      { color: Colors[colorScheme].textSecondary },
+                    ]}
+                  >
+                    ₹{((selectedOrder as any).subtotal || selectedOrder.total_amount).toFixed(0)}
+                  </ThemedText>
+                )}
+              <ThemedText
+                type="small"
+                style={{ color: Colors[colorScheme].textPrimary }}
+              >
+                ₹{(
+                  (selectedOrder as any).subtotal ||
+                  selectedOrder.total_amount -
+                    (selectedOrder.delivery_fee || 0) -
+                    ((selectedOrder as any).handling_charge || 0) -
+                    ((selectedOrder as any).discount_amount || 0)
+                ).toFixed(0)}
+              </ThemedText>
+            </ThemedView>
           </ThemedView>
+          {(selectedOrder as any).discount_amount > 0 && (
+            <ThemedView style={styles.summaryRow}>
+              <ThemedText
+                type="small"
+                style={{ color: Colors.success, fontWeight: '600' }}
+              >
+                Discount Applied
+              </ThemedText>
+              <ThemedText
+                type="small"
+                style={{ color: Colors.success, fontWeight: '600' }}
+              >
+                -₹{((selectedOrder as any).discount_amount || 0).toFixed(0)}
+              </ThemedText>
+            </ThemedView>
+          )}
           <ThemedView style={styles.summaryRow}>
             <ThemedText
               type="small"
@@ -362,17 +405,55 @@ export default function OrderDetail() {
             >
               Delivery Fee
             </ThemedText>
-            <ThemedText
-              type="small"
-              style={{ color: Colors[colorScheme].textSecondary }}
-            >
-              ${selectedOrder.delivery_fee.toFixed(2)}
-            </ThemedText>
+            <ThemedView style={styles.summaryRowRight}>
+              {selectedOrder.delivery_fee === 0 ? (
+                <>
+                  <ThemedText
+                    type="xsmall"
+                    style={[
+                      styles.strikethroughPrice,
+                      { color: Colors[colorScheme].textSecondary },
+                    ]}
+                  >
+                    ₹50
+                  </ThemedText>
+                  <ThemedText
+                    type="small"
+                    style={{ color: Colors.success, fontWeight: '600' }}
+                  >
+                    FREE
+                  </ThemedText>
+                </>
+              ) : (
+                <ThemedText
+                  type="small"
+                  style={{ color: Colors[colorScheme].textPrimary }}
+                >
+                  ₹{(selectedOrder.delivery_fee || 0).toFixed(0)}
+                </ThemedText>
+              )}
+            </ThemedView>
           </ThemedView>
+          {(selectedOrder as any).handling_charge > 0 && (
+            <ThemedView style={styles.summaryRow}>
+              <ThemedText
+                type="small"
+                style={{ color: Colors[colorScheme].textSecondary }}
+              >
+                Handling Charge
+              </ThemedText>
+              <ThemedText
+                type="small"
+                style={{ color: Colors[colorScheme].textPrimary }}
+              >
+                ₹{((selectedOrder as any).handling_charge || 0).toFixed(0)}
+              </ThemedText>
+            </ThemedView>
+          )}
           <ThemedView style={[styles.summaryRow, styles.totalRow]}>
             <ThemedText type="subtitle">Total</ThemedText>
             <ThemedText type="subtitle" style={{ color: Colors.primary }}>
-              ${selectedOrder.total_amount.toFixed(2)}
+              ₹{selectedOrder.total_amount.toFixed(0)}
             </ThemedText>
           </ThemedView>
           <ThemedView style={styles.paymentInfo}>
@@ -521,6 +602,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  summaryRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  summaryRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  strikethroughPrice: {
+    textDecorationLine: 'line-through',
+    fontSize: 12,
   },
   totalRow: {
     marginTop: 8,

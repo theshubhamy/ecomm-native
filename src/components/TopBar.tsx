@@ -40,18 +40,12 @@ const TopBar = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
   header: {
     overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
-    paddingVertical: 8,
   },
   notification: {
     padding: 8,

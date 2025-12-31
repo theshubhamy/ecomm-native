@@ -1,6 +1,5 @@
 import React, { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 
@@ -9,13 +8,10 @@ type TopBarProps = {
 };
 
 const HeaderView = ({ children }: TopBarProps) => {
-  const insets = useSafeAreaInsets();
-
   return (
     <ThemedView
       style={{
         ...styles.container,
-        paddingTop: insets.top,
       }}
     >
       {children}
@@ -25,7 +21,9 @@ const HeaderView = ({ children }: TopBarProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    paddingBottom: 16,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
   },

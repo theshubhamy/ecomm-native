@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchSavedAddresses } from '@/store/slices/locationSlice';
 import { clearCart } from '@/store/slices/cartSlice';
+import { fetchOrderById } from '@/store/slices/ordersSlice';
 import {
   createPaymentIntent,
   processPayment,
@@ -21,15 +22,21 @@ import {
 } from '@/store/slices/paymentSlice';
 import { supabase } from '@/utils/supabase';
 
+const FREE_DELIVERY_THRESHOLD = 1000; // Free delivery for orders above ₹1000
+const BASE_DELIVERY_FEE = 50; // Base delivery fee in INR
+const HANDLING_CHARGE = 2; // Fixed handling charge
+
 export default function Checkout() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{
+    discountAmount?: string;
+    appliedOfferId?: string;
+  }>();
   const { items, total } = useAppSelector(state => state.cart);
   const { user } = useAppSelector(state => state.auth);
-  const { savedAddresses, selectedAddress } = useAppSelector(
-    state => state.location,
-  );
+  const { selectedAddress } = useAppSelector(state => state.location);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod | null>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -40,8 +47,16 @@ export default function Checkout() {
     }
   }, [user, dispatch]);
 
-  const deliveryFee = total >= 500 ? 50 : 0; // Free delivery above ₹500, else ₹50
-  const finalTotal = total + deliveryFee;
+  // Calculate discount from params
+  const discountAmount = params.discountAmount
+    ? parseFloat(params.discountAmount)
+    : 0;
+  const subtotalAfterDiscount = total - discountAmount;
+
+  // Calculate delivery fee (same logic as cart)
+  const deliveryFee =
+    subtotalAfterDiscount >= FREE_DELIVERY_THRESHOLD ? 0 : BASE_DELIVERY_FEE;
+  const finalTotal = subtotalAfterDiscount + deliveryFee + HANDLING_CHARGE;
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
@@ -70,12 +85,16 @@ export default function Checkout() {
         .insert({
           user_id: user.id,
           order_number: orderNumber,
-          status: 'pending',
+          status: 'confirmed',
           total_amount: finalTotal,
+          subtotal: total,
+          discount_amount: discountAmount,
           delivery_fee: deliveryFee,
+          handling_charge: HANDLING_CHARGE,
           payment_method: selectedPaymentMethod,
           payment_status: 'pending',
           delivery_address: selectedAddress,
+          applied_offer_id: params.appliedOfferId || null,
         })
         .select()
         .single();
@@ -165,20 +184,15 @@ export default function Checkout() {
       // Clear cart after successful order
       dispatch(clearCart());
 
-      Alert.alert(
-        'Order Placed!',
-        `Your order #${orderNumber} has been placed successfully. You will receive a confirmation shortly.`,
-        [
-          {
-            text: 'View Orders',
-            onPress: () => router.replace('/(tabs)/orders'),
-          },
-          {
-            text: 'Continue Shopping',
-            onPress: () => router.replace('/(tabs)'),
-          },
-        ],
-      );
+      // Fetch the complete order details and set it in Redux
+      if (user?.id) {
+        await dispatch(
+          fetchOrderById({ userId: user.id, orderId: orderData.id }),
+        );
+      }
+
+      // Navigate to order details page
+      router.replace(`/order/${orderData.id}`);
     } catch (error) {
       Alert.alert(
         'Order Failed',
@@ -218,56 +232,67 @@ export default function Checkout() {
         showsVerticalScrollIndicator={false}
       >
         {/* Delivery Address Section */}
-        <ThemedView
-          style={[
-            styles.section,
-            { backgroundColor: Colors[colorScheme].backgroundPaper },
-          ]}
-        >
+        <ThemedView style={[styles.section]}>
           <ThemedView style={styles.sectionHeader}>
             <ThemedText type="defaultSemiBold">Delivery Address</ThemedText>
-            <ThemedPressable
-              onPress={() => router.push('/address-selection')}
-              style={styles.addButton}
-            >
-              <IconSymbol name="plus" size={16} color={Colors.primary} />
-              <ThemedText
-                type="small"
-                style={{ color: Colors.primary, marginLeft: 4 }}
+            {selectedAddress && (
+              <ThemedPressable
+                onPress={() => router.push('/address-selection')}
+                style={styles.changeButton}
               >
-                {savedAddresses.length > 0 ? 'Change' : 'Add'}
-              </ThemedText>
-            </ThemedPressable>
+                <ThemedText
+                  type="small"
+                  style={{ color: Colors.primary, fontWeight: '600' }}
+                >
+                  Change
+                </ThemedText>
+              </ThemedPressable>
+            )}
           </ThemedView>
 
           {selectedAddress ? (
             <ThemedView style={styles.addressCard}>
               <ThemedView style={styles.addressHeader}>
-                <ThemedText type="defaultSemiBold">
-                  {selectedAddress.type.charAt(0).toUpperCase() +
-                    selectedAddress.type.slice(1)}
-                </ThemedText>
-                {selectedAddress.isDefault && (
-                  <ThemedView
-                    style={[
-                      styles.defaultBadge,
-                      { backgroundColor: Colors.primary + '20' },
-                    ]}
-                  >
-                    <ThemedText
-                      type="xsmall"
-                      style={{ color: Colors.primary, fontWeight: '600' }}
+                <ThemedView style={styles.addressLabelRow}>
+                  <IconSymbol
+                    name={
+                      selectedAddress.type === 'home'
+                        ? 'house.fill'
+                        : selectedAddress.type === 'work'
+                        ? 'tag.fill'
+                        : 'location.fill'
+                    }
+                    size={18}
+                    color={Colors.primary}
+                  />
+                  <ThemedText type="defaultSemiBold">
+                    {selectedAddress.label ||
+                      selectedAddress.type.charAt(0).toUpperCase() +
+                        selectedAddress.type.slice(1)}
+                  </ThemedText>
+                  {selectedAddress.isDefault && (
+                    <ThemedView
+                      style={[
+                        styles.defaultBadge,
+                        { backgroundColor: Colors.primary + '20' },
+                      ]}
                     >
-                      Default
-                    </ThemedText>
-                  </ThemedView>
-                )}
+                      <ThemedText
+                        type="xsmall"
+                        style={{ color: Colors.primary, fontWeight: '600' }}
+                      >
+                        Default
+                      </ThemedText>
+                    </ThemedView>
+                  )}
+                </ThemedView>
               </ThemedView>
               <ThemedText
                 type="small"
                 style={{
-                  color: Colors[colorScheme].textSecondary,
-                  marginTop: 4,
+                  color: Colors[colorScheme].textPrimary,
+                  marginTop: 6,
+                  lineHeight: 18,
                 }}
               >
                 {selectedAddress.addressLine1}
@@ -275,10 +300,10 @@ export default function Checkout() {
                   `, ${selectedAddress.addressLine2}`}
               </ThemedText>
               <ThemedText
-                type="small"
+                type="xsmall"
                 style={{
                   color: Colors[colorScheme].textSecondary,
-                  marginTop: 2,
+                  marginTop: 3,
                 }}
               >
                 {selectedAddress.city}, {selectedAddress.state}{' '}
@@ -286,33 +311,71 @@ export default function Checkout() {
               </ThemedText>
               {selectedAddress.contactPhone && (
                 <ThemedText
-                  type="small"
+                  type="xsmall"
                   style={{
                     color: Colors[colorScheme].textSecondary,
                     marginTop: 4,
                   }}
                 >
-                  Phone: {selectedAddress.contactPhone}
+                  📞 {selectedAddress.contactPhone}
                 </ThemedText>
               )}
             </ThemedView>
           ) : (
-            <ThemedView style={styles.emptyAddress}>
+            <ThemedView
+              style={[
+                styles.emptyAddress,
+                {
+                  backgroundColor: Colors[colorScheme].background,
+                  borderColor: Colors[colorScheme].textSecondary + '20',
+                },
+              ]}
+            >
               <IconSymbol
                 name="location.fill"
-                size={32}
-                color={Colors[colorScheme].textSecondary}
+                size={36}
+                color={Colors[colorScheme].textSecondary + '60'}
               />
               <ThemedText
                 type="small"
                 style={{
+                  color: Colors[colorScheme].textPrimary,
+                  marginTop: 12,
+                  textAlign: 'center',
+                  fontWeight: '600',
+                }}
+              >
+                No address selected
+              </ThemedText>
+              <ThemedText
+                type="xsmall"
+                style={{
                   color: Colors[colorScheme].textSecondary,
-                  marginTop: 8,
+                  marginTop: 4,
                   textAlign: 'center',
                 }}
               >
-                No address selected. Please add a delivery address.
+                Please add a delivery address
               </ThemedText>
+              <ThemedPressable
+                onPress={() => router.push('/address-selection')}
+                style={[
+                  styles.addAddressButton,
+                  { backgroundColor: Colors.primary },
+                ]}
+              >
+                <IconSymbol name="plus" size={14} color={Colors.black} />
+                <ThemedText
+                  type="small"
+                  style={{
+                    color: Colors.black,
+                    marginLeft: 6,
+                    fontWeight: '600',
+                  }}
+                >
+                  Add Address
+                </ThemedText>
+              </ThemedPressable>
             </ThemedView>
           )}
         </ThemedView>
@@ -329,66 +392,105 @@ export default function Checkout() {
           </ThemedText>
 
           <ThemedView style={styles.paymentMethods}>
-            {(['card', 'upi', 'wallet', 'cash'] as PaymentMethod[]).map(
-              method => (
-                <ThemedPressable
-                  key={method}
-                  onPress={() => setSelectedPaymentMethod(method)}
-                  style={[
-                    styles.paymentMethodItem,
-                    {
-                      backgroundColor:
-                        selectedPaymentMethod === method
-                          ? Colors.primary + '20'
-                          : Colors[colorScheme].background,
-                      borderColor:
-                        selectedPaymentMethod === method
-                          ? Colors.primary
-                          : Colors[colorScheme].textSecondary + '30',
-                    },
-                  ]}
-                >
-                  <ThemedView style={styles.paymentMethodLeft}>
+            {[
+              {
+                method: 'card' as PaymentMethod,
+                label: 'Credit/Debit Card',
+                icon: 'creditcard.fill' as const,
+              },
+              {
+                method: 'upi' as PaymentMethod,
+                label: 'UPI',
+                icon: 'paperplane.fill' as const,
+              },
+              {
+                method: 'wallet' as PaymentMethod,
+                label: 'Wallet',
+                icon: 'cash.fill' as const,
+              },
+              {
+                method: 'cash' as PaymentMethod,
+                label: 'Cash on Delivery',
+                icon: 'cash.fill' as const,
+              },
+            ].map(({ method, label, icon }) => (
+              <ThemedPressable
+                key={method}
+                onPress={() => setSelectedPaymentMethod(method)}
+                style={[
+                  styles.paymentMethodItem,
+                  {
+                    borderWidth: 1,
+                    borderColor: Colors[colorScheme].textSecondary + '30',
+                    borderRadius: 10,
+                  },
+                  selectedPaymentMethod === method && {
+                    borderWidth: 1,
+                    borderColor: Colors.primary,
+                  },
+                ]}
+              >
+                <ThemedView style={styles.paymentMethodLeft}>
+                  <ThemedView
+                    style={[
+                      styles.paymentIconContainer,
+                      selectedPaymentMethod === method && {
+                        backgroundColor: Colors.primary + '25',
+                      },
+                    ]}
+                  >
                     <IconSymbol
-                      name={
-                        method === 'card'
-                          ? 'creditcard.fill'
-                          : method === 'upi'
-                          ? 'paperplane.fill'
-                          : method === 'wallet'
-                          ? 'square'
-                          : 'creditcard.fill'
-                      }
-                      size={24}
+                      name={icon}
+                      size={18}
                       color={
                         selectedPaymentMethod === method
                           ? Colors.primary
                           : Colors[colorScheme].textSecondary
                       }
                     />
+                  </ThemedView>
+                  <ThemedView style={styles.paymentMethodText}>
                     <ThemedText
-                      type="defaultSemiBold"
+                      type="small"
                       style={{
-                        marginLeft: 12,
                         color:
                           selectedPaymentMethod === method
                             ? Colors.primary
                             : Colors[colorScheme].textPrimary,
+                        fontWeight: '600',
                       }}
                     >
-                      {method.charAt(0).toUpperCase() + method.slice(1)}
+                      {label}
                     </ThemedText>
+                    {method === 'cash' && (
+                      <ThemedText
+                        type="xsmall"
+                        style={{
+                          color: Colors[colorScheme].textSecondary,
+                          marginTop: 1,
+                        }}
+                      >
+                        Pay when you receive
+                      </ThemedText>
+                    )}
                   </ThemedView>
-                  {selectedPaymentMethod === method && (
+                </ThemedView>
+                {selectedPaymentMethod === method && (
+                  <ThemedView
+                    style={[
+                      styles.checkmarkContainer,
+                      { backgroundColor: Colors.primary },
+                    ]}
+                  >
                     <IconSymbol
                       name="checkmark.square.fill"
-                      size={20}
-                      color={Colors.primary}
+                      size={16}
+                      color={Colors.white}
                     />
-                  )}
-                </ThemedPressable>
-              ),
-            )}
+                  </ThemedView>
+                )}
+              </ThemedPressable>
+            ))}
           </ThemedView>
         </ThemedView>
 
@@ -404,19 +506,59 @@ export default function Checkout() {
           </ThemedText>
 
           <ThemedView style={styles.summaryRow}>
-            <ThemedText
-              type="small"
-              style={{ color: Colors[colorScheme].textSecondary }}
-            >
-              Subtotal ({items.length} items)
-            </ThemedText>
-            <ThemedText
-              type="small"
-              style={{ color: Colors[colorScheme].textSecondary }}
-            >
-              ₹{total.toFixed(0)}
-            </ThemedText>
+            <ThemedView style={styles.summaryRowLeft}>
+              <ThemedText
+                type="small"
+                style={{ color: Colors[colorScheme].textSecondary }}
+              >
+                Subtotal ({items.length} items)
+              </ThemedText>
+              {discountAmount > 0 && (
+                <ThemedText
+                  type="xsmall"
+                  style={{ color: Colors.success, marginLeft: 8 }}
+                >
+                  Saved ₹{discountAmount.toFixed(0)}
+                </ThemedText>
+              )}
+            </ThemedView>
+            <ThemedView style={styles.summaryRowRight}>
+              {discountAmount > 0 && (
+                <ThemedText
+                  type="xsmall"
+                  style={[
+                    styles.strikethroughPrice,
+                    { color: Colors[colorScheme].textSecondary },
+                  ]}
+                >
+                  ₹{total.toFixed(0)}
+                </ThemedText>
+              )}
+              <ThemedText
+                type="small"
+                style={{ color: Colors[colorScheme].textPrimary }}
+              >
+                ₹{subtotalAfterDiscount.toFixed(0)}
+              </ThemedText>
+            </ThemedView>
           </ThemedView>
+
+          {discountAmount > 0 && (
+            <ThemedView style={styles.summaryRow}>
+              <ThemedText
+                type="small"
+                style={{ color: Colors.success, fontWeight: '600' }}
+              >
+                Discount Applied
+              </ThemedText>
+              <ThemedText
+                type="small"
+                style={{ color: Colors.success, fontWeight: '600' }}
+              >
+                -₹{discountAmount.toFixed(0)}
+              </ThemedText>
+            </ThemedView>
+          )}
 
           <ThemedView style={styles.summaryRow}>
             <ThemedText
@@ -425,11 +567,48 @@ export default function Checkout() {
             >
               Delivery Fee
             </ThemedText>
+            <ThemedView style={styles.summaryRowRight}>
+              {deliveryFee === 0 ? (
+                <>
+                  <ThemedText
+                    type="xsmall"
+                    style={[
+                      styles.strikethroughPrice,
+                      { color: Colors[colorScheme].textSecondary },
+                    ]}
+                  >
+                    ₹{BASE_DELIVERY_FEE}
+                  </ThemedText>
+                  <ThemedText
+                    type="small"
+                    style={{ color: Colors.success, fontWeight: '600' }}
+                  >
+                    FREE
+                  </ThemedText>
+                </>
+              ) : (
+                <ThemedText
+                  type="small"
+                  style={{ color: Colors[colorScheme].textPrimary }}
+                >
+                  ₹{deliveryFee.toFixed(0)}
+                </ThemedText>
+              )}
+            </ThemedView>
+          </ThemedView>
+
+          <ThemedView style={styles.summaryRow}>
             <ThemedText
               type="small"
               style={{ color: Colors[colorScheme].textSecondary }}
             >
-              ₹{deliveryFee.toFixed(0)}
+              Handling Charge
+            </ThemedText>
+            <ThemedText
+              type="small"
+              style={{ color: Colors[colorScheme].textPrimary }}
+            >
+              ₹{HANDLING_CHARGE.toFixed(0)}
             </ThemedText>
           </ThemedView>
 
@@ -493,69 +672,125 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   section: {
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
   },
   sectionTitle: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  addButton: {
+  changeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  addAddressButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 4,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
   addressCard: {
-    marginTop: 8,
     padding: 12,
-    borderRadius: 8,
-    backgroundColor: Colors.light.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.light.textSecondary + '20',
   },
   addressHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  addressLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
+    flex: 1,
+  },
+  addressLabel: {
+    fontSize: 15,
   },
   defaultBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginLeft: 8,
   },
   emptyAddress: {
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.light.background,
+    borderWidth: 1,
+    borderColor: Colors.light.textSecondary + '20',
+    borderStyle: 'dashed',
+    marginTop: 8,
   },
   paymentMethods: {
-    gap: 8,
+    gap: 6,
   },
   paymentMethodItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 0,
   },
   paymentMethodLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  paymentIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  paymentMethodText: {
+    flex: 1,
+  },
+  checkmarkContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  summaryRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  summaryRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  strikethroughPrice: {
+    textDecorationLine: 'line-through',
+    fontSize: 12,
   },
   totalRow: {
     marginTop: 8,

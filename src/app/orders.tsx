@@ -7,7 +7,6 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { ThemedButton } from '@/components/ThemedButton';
 import {
   fetchOrders,
   cancelOrder,
@@ -77,35 +76,51 @@ const OrderCard = ({
   const canReorder = order.status === 'delivered';
 
   return (
-    <ThemedPressable
-      onPress={onPress}
-      style={[
-        styles.orderCard,
-        { backgroundColor: Colors[colorScheme].backgroundPaper },
-      ]}
-    >
+    <ThemedPressable onPress={onPress} style={styles.orderCard}>
       <ThemedView style={styles.orderHeader}>
         <ThemedView style={styles.orderInfo}>
-          <ThemedText type="defaultSemiBold">
-            Order #{order.order_number}
-          </ThemedText>
-          <ThemedText
-            type="xsmall"
-            style={{ color: Colors[colorScheme].textSecondary, marginTop: 2 }}
-          >
-            {new Date(order.created_at).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </ThemedText>
+          <ThemedView style={styles.orderNumberRow}>
+            <IconSymbol name="tag.fill" size={16} color={Colors.primary} />
+            <ThemedText type="defaultSemiBold" style={styles.orderNumber}>
+              Order #{order.order_number}
+            </ThemedText>
+          </ThemedView>
+          <ThemedView style={styles.orderDateRow}>
+            <IconSymbol
+              name="calendar"
+              size={12}
+              color={Colors[colorScheme].textSecondary}
+            />
+            <ThemedText
+              type="xsmall"
+              style={{
+                color: Colors[colorScheme].textSecondary,
+                marginLeft: 4,
+              }}
+            >
+              {new Date(order.created_at).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </ThemedText>
+          </ThemedView>
         </ThemedView>
         <ThemedView
-          style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}
+          style={[
+            styles.statusBadge,
+            {
+              backgroundColor: statusColor + '15',
+              borderColor: statusColor + '30',
+            },
+          ]}
         >
+          <ThemedView
+            style={[styles.statusDot, { backgroundColor: statusColor }]}
+          />
           <ThemedText
             type="xsmall"
-            style={{ color: statusColor, fontWeight: '600' }}
+            style={{ color: statusColor, fontWeight: '600', marginLeft: 6 }}
           >
             {getStatusLabel(order.status)}
           </ThemedText>
@@ -113,8 +128,15 @@ const OrderCard = ({
       </ThemedView>
 
       <ThemedView style={styles.orderItems}>
-        {order.items.slice(0, 3).map(item => (
-          <ThemedView key={item.id} style={styles.orderItem}>
+        {order.items.slice(0, 3).map((item, index) => (
+          <ThemedView
+            key={item.id}
+            style={[
+              styles.orderItem,
+              index < order.items.slice(0, 3).length - 1 &&
+                styles.orderItemBorder,
+            ]}
+          >
             {item.product_image && (
               <Image
                 source={{ uri: item.product_image }}
@@ -123,72 +145,96 @@ const OrderCard = ({
               />
             )}
             <ThemedView style={styles.itemInfo}>
-              <ThemedText type="small" numberOfLines={1}>
+              <ThemedText
+                type="small"
+                numberOfLines={1}
+                style={{ fontWeight: '500' }}
+              >
                 {item.product_name}
               </ThemedText>
-              <ThemedText
-                type="xsmall"
-                style={{ color: Colors[colorScheme].textSecondary }}
-              >
-                Qty: {item.quantity} × ₹{item.price.toFixed(0)}
-              </ThemedText>
+              <ThemedView style={styles.itemDetailsRow}>
+                <ThemedText
+                  type="xsmall"
+                  style={{ color: Colors[colorScheme].textSecondary }}
+                >
+                  Qty: {item.quantity}
+                </ThemedText>
+                <ThemedText
+                  type="xsmall"
+                  style={{
+                    color: Colors[colorScheme].textPrimary,
+                    fontWeight: '600',
+                    marginLeft: 8,
+                  }}
+                >
+                  ₹{item.price.toFixed(0)}
+                </ThemedText>
+              </ThemedView>
             </ThemedView>
           </ThemedView>
         ))}
         {order.items.length > 3 && (
-          <ThemedText
-            type="xsmall"
-            style={{
-              color: Colors.primary,
-              marginTop: 8,
-              textAlign: 'center',
-            }}
-          >
-            +{order.items.length - 3} more items
-          </ThemedText>
+          <ThemedView style={styles.moreItemsContainer}>
+            <ThemedText
+              type="xsmall"
+              style={{
+                color: Colors.primary,
+                fontWeight: '600',
+              }}
+            >
+              +{order.items.length - 3} more{' '}
+              {order.items.length - 3 === 1 ? 'item' : 'items'}
+            </ThemedText>
+          </ThemedView>
         )}
       </ThemedView>
 
       <ThemedView style={styles.orderFooter}>
-        <ThemedView>
+        <ThemedView style={styles.totalSection}>
           <ThemedText
             type="xsmall"
             style={{ color: Colors[colorScheme].textSecondary }}
           >
             Total Amount
           </ThemedText>
-          <ThemedText type="subtitle" style={{ color: Colors.primary }}>
+          <ThemedText
+            type="subtitle"
+            style={{ color: Colors.primary, marginTop: 2 }}
+          >
             ₹{order.total_amount.toFixed(0)}
           </ThemedText>
         </ThemedView>
         <ThemedView style={styles.orderActions}>
           {canReorder && (
-            <ThemedButton
+            <ThemedPressable
               onPress={onReorder}
               style={[
                 styles.reorderButton,
                 { backgroundColor: Colors.primary },
               ]}
             >
-              <IconSymbol name="cart.fill" size={16} color={Colors.black} />
+              <IconSymbol name="cart.fill" size={14} color={Colors.black} />
               <ThemedText
                 type="small"
                 style={{
                   color: Colors.black,
                   fontWeight: '600',
-                  marginLeft: 4,
+                  marginLeft: 6,
                 }}
               >
                 Re-order
               </ThemedText>
-            </ThemedButton>
+            </ThemedPressable>
           )}
           {canCancel && (
-            <ThemedButton
+            <ThemedPressable
               onPress={onCancel}
               style={[
                 styles.cancelButton,
-                { backgroundColor: Colors.error + '15' },
+                {
+                  backgroundColor: Colors.error + '10',
+                  borderColor: Colors.error + '30',
+                },
               ]}
             >
               <ThemedText
@@ -197,7 +243,7 @@ const OrderCard = ({
               >
                 Cancel
               </ThemedText>
-            </ThemedButton>
+            </ThemedPressable>
           )}
         </ThemedView>
       </ThemedView>
@@ -276,22 +322,31 @@ export default function Orders() {
     >
       <HeaderView>
         <ThemedView style={styles.header}>
-          <ThemedText type="subtitle">My Orders</ThemedText>
-          {orders.length > 0 && (
-            <ThemedText
-              type="xsmall"
-              style={{ color: Colors[colorScheme].textSecondary }}
-            >
-              {orders.length} orders
-            </ThemedText>
-          )}
+          <ThemedPressable onPress={() => router.back()}>
+            <IconSymbol
+              name="chevron.left"
+              size={24}
+              color={Colors[colorScheme].textPrimary}
+            />
+          </ThemedPressable>
+          <ThemedText type="subtitle">Orders</ThemedText>
+          <ThemedView style={{ width: 24 }} />
         </ThemedView>
       </HeaderView>
 
       {/* Filter Tabs */}
       {orders.length > 0 && (
-        <ThemedView style={styles.filterContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ThemedView
+          style={[
+            styles.filterContainer,
+            { backgroundColor: Colors[colorScheme].background },
+          ]}
+        >
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScrollContent}
+          >
             {(
               [
                 'all',
@@ -312,6 +367,10 @@ export default function Orders() {
                       filter === status
                         ? Colors.primary
                         : Colors[colorScheme].backgroundPaper,
+                    borderColor:
+                      filter === status
+                        ? Colors.primary
+                        : Colors[colorScheme].textSecondary + '20',
                   },
                 ]}
               >
@@ -322,7 +381,7 @@ export default function Orders() {
                       filter === status
                         ? Colors.black
                         : Colors[colorScheme].textPrimary,
-                    fontWeight: filter === status ? '600' : '400',
+                    fontWeight: filter === status ? '600' : '500',
                   }}
                 >
                   {status === 'all'
@@ -337,10 +396,7 @@ export default function Orders() {
         </ThemedView>
       )}
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView>
         {!user?.id ? (
           <ThemedView style={styles.emptyContainer}>
             <ThemedText type="subtitle">Sign in to view your orders</ThemedText>
@@ -356,11 +412,7 @@ export default function Orders() {
             </ThemedText>
           </ThemedView>
         ) : isLoading ? (
-          <ThemedView style={styles.ordersList}>
-            {[1, 2, 3].map(i => (
-              <OrderCardSkeleton key={i} />
-            ))}
-          </ThemedView>
+          [1, 2, 3].map(i => <OrderCardSkeleton key={i} />)
         ) : error ? (
           <ThemedView style={styles.errorContainer}>
             <ThemedText type="subtitle" style={{ color: Colors.error }}>
@@ -372,12 +424,22 @@ export default function Orders() {
           </ThemedView>
         ) : filteredOrders.length === 0 ? (
           <ThemedView style={styles.emptyContainer}>
-            <IconSymbol
-              name="cart.fill"
-              size={64}
-              color={Colors[colorScheme].textSecondary}
-            />
-            <ThemedText type="subtitle" style={{ marginTop: 16 }}>
+            <ThemedView
+              style={[
+                styles.emptyIconContainer,
+                { backgroundColor: Colors[colorScheme].backgroundPaper },
+              ]}
+            >
+              <IconSymbol
+                name="cart.fill"
+                size={48}
+                color={Colors[colorScheme].textSecondary + '60'}
+              />
+            </ThemedView>
+            <ThemedText
+              type="defaultSemiBold"
+              style={{ marginTop: 20, textAlign: 'center' }}
+            >
               {filter === 'all' ? 'No orders yet' : `No ${filter} orders`}
             </ThemedText>
             <ThemedText
@@ -386,6 +448,7 @@ export default function Orders() {
                 color: Colors[colorScheme].textSecondary,
                 marginTop: 8,
                 textAlign: 'center',
+                paddingHorizontal: 32,
               }}
             >
               {filter === 'all'
@@ -420,21 +483,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  orderCountBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: Colors.primary + '15',
+  },
   filterContainer: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.textSecondary + '20',
+    borderBottomColor: Colors.light.textSecondary + '15',
+  },
+  filterScrollContent: {
+    paddingRight: 16,
   },
   filterTab: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     marginRight: 8,
+    borderWidth: 1,
   },
-  scrollContent: {
-    padding: 16,
-  },
+
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -453,61 +529,106 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
-    minHeight: 200,
+    padding: 48,
+    minHeight: 300,
+  },
+  emptyIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ordersList: {
-    gap: 16,
+    margin: 10,
+    gap: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   orderCard: {
-    borderRadius: 16,
+    marginBottom: 16,
     padding: 16,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   orderHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
   orderInfo: {
     flex: 1,
   },
+  orderNumberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  orderNumber: {
+    fontSize: 16,
+  },
+  orderDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   orderItems: {
-    gap: 8,
-    marginTop: 8,
+    marginTop: 4,
+    marginBottom: 4,
   },
   orderItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    paddingVertical: 10,
+  },
+  orderItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.textSecondary + '10',
   },
   itemImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    backgroundColor: Colors.light.background,
   },
   itemInfo: {
     flex: 1,
-    gap: 2,
+    gap: 4,
+  },
+  itemDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  moreItemsContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginTop: 4,
   },
   orderFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
-    paddingTop: 12,
+    marginTop: 4,
+    paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.textSecondary + '20',
+    borderTopColor: Colors.light.textSecondary + '15',
+  },
+  totalSection: {
+    flex: 1,
   },
   orderActions: {
     flexDirection: 'row',
@@ -517,13 +638,14 @@ const styles = StyleSheet.create({
   reorderButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
   },
   cancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
+    borderWidth: 1,
   },
 });

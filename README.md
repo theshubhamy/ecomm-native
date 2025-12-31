@@ -27,6 +27,24 @@ A modern, full-featured quick commerce mobile application built with React Nativ
 - **Error Boundaries** - Graceful error handling
 - **Form Validation** - Input validation and error handling
 
+## 📸 Screenshots
+
+<div align="center">
+
+|                        Home Screen                         |                         Product Catalog                         |
+| :--------------------------------------------------------: | :-------------------------------------------------------------: |
+| <img src="snaps/home.jpeg" alt="Home Screen" width="300"/> | <img src="snaps/catlog.jpe" alt="Product Catalog" width="300"/> |
+
+|                        Shopping Cart                         |                             Product Details                              |
+| :----------------------------------------------------------: | :----------------------------------------------------------------------: |
+| <img src="snaps/cart.jpeg" alt="Shopping Cart" width="300"/> | <img src="snaps/productDetails.jpeg" alt="Product Details" width="300"/> |
+
+|                          User Profile                          |
+| :------------------------------------------------------------: |
+| <img src="snaps/profile.jpeg" alt="User Profile" width="300"/> |
+
+</div>
+
 ## 📋 Prerequisites
 
 - Node.js 18+ and npm/yarn
